@@ -1,0 +1,596 @@
+Why Spring - 
+lightweight alternative to j2ee - Provides many helper API
+Servlets, Jsp, JMS ,RMI -> EJB -> Web Services -> Ease of use JPA, JSF, JAXB, JAX-WS -> JAX-RS, Context dependency injection -> Concurrency, Websockets, JMS2
+Entity Beans -> basicaly maps between java classes and database tables - very slow -> it alowed everything
+
+In JAVAEE7 we can do whatever spring can do -> no xml stuff-> all java annotations -> but its late -> Spring already became popular
+
+Spring 5 -> only java 8
+
+Goals of spring
+
+Light weight development with POJOs
+Depedency injection to promote loose coupling
+Declarative programming with AOP
+Minimize boilerplate coding
+
+Core Container -> Creating beans and make it available
+	Bean factory -> for creating the beans, can read config files, setting properties, 
+
+AOP - application wide applications like logging, security, transactions
+
+Web layer -> Data Access Layer -> 
+
+Inversion of control -> 
+
+application is outsourcing the construcion and creation of objects
+outsource to Object creation factory
+
+Spring inversion of control -> 
+
+Create and manage objects (Inversion of control)
+Inject objects depdendencies (Dependency Injection)
+
+XML Configuration
+Java Annotations
+Java Source Code
+
+Configure Spring Beans
+Create Spring container
+Reterive beans from container
+
+Configure spring beans in xml
+<bean id="">
+</bean>
+
+Spring container is generally knowns as ApplicationContext
+
+Implementations
+-> ClassPathXmlApplicationContext
+-> AnnotationCofigApplicationContext
+-> GenericWebApplicationContext
+
+applicationcontex.xml
+application talk to container to get the bean
+context.getBean()
+
+A "Spring Bean" is simply a Java object.
+When Java objects are created by the Spring Container, then Spring refers to them as "Spring Beans".
+Spring Beans are created from normal Java classes .... just like Java objects. 
+
+Dependency Inversion 
+	- Client delegates to calls to another object the responsibility of providing its depdendencies
+	- lets say car--all of its parts build in factory and injects all to car--all
+
+Behind the scenes spring calls the bean default constructor or noarg constructor
+If constructor reference is provided it will call appropriate constructor
+
+
+Why noarg constructor is required in spring
+Since you have defined a constructor in class code, compiler didn’t create default one. While creating object you are invoking default one, which doesn’t exist in class code. Then the code gives an compilation error.
+
+Setter Injection -> <property name ="employee" ref=""/> -> calls setEmployee-> this tag will be defined inside bean tag
+Injecting literal Values -> <property name="emailAddress" value="uppu.vinodkumar@ggmail.com"/>
+Injecting from properties file -><context:property-placeholder location="classpath:sport.properties"/>
+								  <property name="emailAddress" value="${email.address}"/>
+Bean Scopes -> Scope refers to lie cycle of bean
+By default scope is singleton - Spring conatiner creates a single instance for bean and cached in memory and share the same bean reference to every requestor
+Explicilty specify -> <bean scope="singltton"/>
+
+prototype scope -> creates a separate instance for every requestor
+request -> scoped to http web request
+session-> scoped to http web session
+global-session->scoped to http web global session
+
+Bean life cycle
+
+Container started -> Bean instantiated -> Dependencies Injected -> Internal Spring Processing -> Your custom init method
+Container shutdown -> Custom destroy method
+In init and destroy we can call business logic and clearing database connection and sockets code
+<bean init-method="doStartUp" destroy-method="doCleanUp"/> - init and destroy methods can have only public,protected and private specifiers
+cannot accept any arguments
+
+For Prototype Scoped Bean -> Spring doesnot manage the complete life cycle -> spring container doesnt call the destroy method
+
+Spring Annotations
+-> Provide metadata of class
+-> processed at compile time or runtime
+-> XML is very verbose - when beans are more- XML keeps on growing
+-> Annotations minimize xml configuration
+-> Spring scans all annotations and automatically register beans with container
+
+<context:componet-scan base-package="<package to scan>"/>
+Add @Component scan to java class -> @Component("<beanId") -> Spring will scan and registers it automatically
+
+Default Component Names -> camelCase -> Ex:- TennisCoach => tennisCoach
+
+Annotations Construction Injection
+ AutoWiring
+  -> Spring looks for a class that matches the property
+  Matches by type -> class or interface
+  -> Spring will inject automatically -> Hence it is autowired
+  -> Spring scans all the annotations and find the matching bean and inject it
+ 
+ If we autowire the object reference with interface name -> it will look for implementations and get the correct bean
+ If multiple implementations are there -> Use @Qualifier Annotation
+ 
+ As of Spring Framework 4.3, an @Autowired annotation on such a constructor is no longer necessary if the target bean only defines one constructor to begin with. However, if several constructors are available, at least one must be annotated to teach the container which one to use.
+ 
+Setter Injection
+Place @Autowired annotation above setter method
+
+Method Injection
+@Autowired can be used for any methods for dependency injection - not only for setter methods
+
+Field Injection
+- Accomplished by java reflection
+Place @Autowired direclty above field -> With this no need for setter methods
+
+@Autowired
+@Qualifier("<beanid>")
+private Employee theEmployeeObject;
+
+Default bean names
+RESTFortuneService --> RESTFortuneService
+No conversion since the first two characters are upper case.
+
+Example of using qualifier in cosntructor injection -> @Qualifier should be used inside construc
+@Autowired
+    public TennisCoach(@Qualifier("randomFortuneService") FortuneService theFortuneService) {
+
+        System.out.println(">> TennisCoach: inside constructor using @autowired and @qualifier");
+        
+        fortuneService = theFortuneService;
+    }
+	
+Properties injection using annotation
+@Value("${foo.email}")
+
+@Scope annotation
+	-> @Scope("singleton")
+@Component
+@Scope("singleton")
+
+Bean life cycle annotations
+	-> @PostConstruct above method
+	-> @PreDestory above method
+
+Spring Contianer using java code without XML
+-> Java class and annotated with @Configuration
+	-> @Configuration
+		@ComponentScan("basepackage")
+		public class SpringConfig
+-> Read Spring Configuration class
+	-> AnnotationCofigApplicationContext context = new AnnotationCofigApplicationContext(SpringConfig.class);
+-> Define beans with java code
+	-> use @Bean annotation when @Component is not used for class
+	Ex:-
+	
+	@Bean
+	public FortuneService happyFortuneService() {
+		return new HappyFortuneService();
+	}
+	
+	@Bean
+	public Coach swimCoach() {
+		SwimCoach swimCoach = new SwimCoach(happyFortuneService());
+		return swimCoach;
+	}
+
+How @Bean works behind scenes
+The @Bean annotation tells Spring that we are creating a bean component manually. We didn't specify a scope so the default scope is singleton.
+
+Here is a real-time use case of using @Bean: You can use @Bean to make an existing third-party class available to your Spring framework application context.	
+
+Inject values from property file
+@Configuration
+@PropertySource("classpath:spot.properties")
+
+
+Spring MVC ->
+Framework for building applications in JAVA
+Based on MVC desinger pattern
+Leveraging the features of Core Spring Framework(IoC, DI)
+
+Web Browser --> Front Controller -> Controller -> View Template
+
+-> Provided form validations
+-> Flexible configuration for view layer like jsp,thymeleaf
+
+Controller -> Contains business logi, Store/reterive data, Place data in model
+Model -> Contains data, Data can be any java objec/collection
+View-> Jsp+JSTL, can read model data and display
+
+1. Configure SpringDisptacherServlet
+2. Ser URL mapping for this servlet in web.xml
+3. Add configuraions to file WEB-INF/spring-mvc-demo-servlet.xml
+4. Add support for component scanning
+5. support for conversion,formatting and validations
+6. MVC View Resolver
+
+web.xml
+<web-app>
+	<servlet>
+		<servlet-name>dispatcher</servlet-name>
+		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+		<init-param>
+			<param-name>contextConfigLocation</param-name>
+			<param-value>/WEB-INF/spring-mvc-demo-servlet.xml</param-value><!--spring config file-->
+		</init-param>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>dispatcher</servlet-name>
+		<url-pattern>/</url-pattern>
+	</servlet-mapping>
+</web-app>
+
+spring-mvc-demo-servlet.xml
+<context:componet-scan base-package=""/>
+
+support for conversion,formatting and validation support
+<mvc:annotaion-driven/>
+
+MVC Resolver
+
+<bean class="org.springframework.web.servlet.InternalResouceViewResolver">
+	<property name="prefix" value="/WEB-INF/view">
+	<property name="suffix" value=".jsp">
+</bean>
+
+How to configure the Spring Dispatcher Servlet using all Java Code (no xml)?
+
+public class MySpringMvcDispatcherServletInitializer extends AbstractAnnotationConfigDispatcherServletInitializer {
+ 
+	@Override
+	protected Class<?>[] getRootConfigClasses() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+ 
+	@Override
+	protected Class<?>[] getServletConfigClasses() {
+		return new Class[] { DemoAppConfig.class };
+	}
+	 
+		@Override
+		protected String[] getServletMappings() {
+			return new String[] { "/" };
+		}
+ 
+}
+
+@Configuration
+@EnableWebMvc
+@ComponentScan(basePackages="com.luv2code.springdemo")
+public class DemoAppConfig {
+ 
+	// define a bean for ViewResolver
+ 
+	@Bean
+	public ViewResolver viewResolver() {
+		
+		InternalResourceViewResolver viewResolver = new InternalResourceViewResolver();
+		
+		viewResolver.setPrefix("/WEB-INF/view/");
+		viewResolver.setSuffix(".jsp");
+		
+		return viewResolver;
+	}
+	
+}
+
+
+Create Controller
+Annotate with @Controller - it inherts @Component
+Add method and add @RequestMapping("<path>")
+
+@RequestMapping("/showform)
+public String showMyPage() {
+	return "main";
+}
+
+if in view resolver suffix is .jsp and prefix is /WEBINF/VIEW/ then it will become
+/WEBINF/VIEW/main.jsp
+
+Read HTML Form Data
+
+@RequestMapping("/processform)
+public String processForm() {
+	return "helloworld"; -->/WEBINF/VIEW/helloworld.jsp
+}
+
+Adding data to Spring Model
+-> Passing Model to controller
+
+@RequestMapping("/processform)
+public String processForm(HttpServletRequest request, Model model) {
+	request.getParameter("");
+	model.addAttribute("message",result); -> model is a container to hold data
+	return "helloworld"; -->/WEBINF/VIEW/helloworld.jsp
+}
+
+
+helloworld.jsp
+
+<html><body>
+Message : ${message} -- from model
+</body></html>
+
+How to use CSS, JavaScript and Images in Spring MVC Web App
+
+Any static resource is processed as a URL Mapping in Spring MVC. You can configure references to static resources in the spring-mvc-demo-servlet.xml.
+Step 1: Add the following entry to your Spring MVC configuration file: spring-mvc-demo-servlet.xml
+
+You can place this entry anywhere in your Spring MVC config file.
+
+<mvc:resources mapping="/resources/**" location="/resources/"></mvc:resources> 
+
+Step 2: Now in your view pages, you can access the static files using this syntax:
+
+<img src="${pageContext.request.contextPath}/resources/images/spring-logo.png"> 
+
+You need to use the JSP expression ${pageContext.request.contextPath} to access the correct root directory for your web application.
+
+Apply the same technique for reading CSS and JavaScript.
+
+---
+
+Here's a full example that reads CSS, JavaScript and images.
+#{pageContext.request.contextPath}
+
+<!DOCTYPE html> <html>
+
+<head>
+
+    <link rel="stylesheet" type="text/css"          
+
+            href="${pageContext.request.contextPath}/resources/css/my-test.css">
+
+    <script src="${pageContext.request.contextPath}/resources/js/simple-test.js"></script>
+
+</head>
+
+<body>
+
+<h2>Spring MVC Demo - Home Page</h2>
+
+<a href="showForm">Plain Hello World</a>
+
+<br><br>
+
+<img src="${pageContext.request.contextPath}/resources/images/spring-logo.png" />
+
+<br><br>
+
+<input type="button" onclick="doSomeWork()" value="Click Me"/>
+
+</body>
+
+</html>
+
+
+Bind parameters
+
+-->@RequestParam("request parameter name") can be used to bind parameter to a method parameter
+
+@RequestMapping("/processform)
+public String processForm(@RequestParam("name") String name, Model model) {
+	request.getParameter("");
+	model.addAttribute("message",result); -> model is a container to hold data
+	return "helloworld"; -->/WEBINF/VIEW/helloworld.jsp
+}
+
+Controller Level Request Mapping
+@RequestMapping can be added to controller class.
+
+
+Spring MVC Form Tags
+Automatically set data and reterive data
+form:form
+form:input
+form:checkbox
+form:radiobutton
+
+@taglib ref="form" uri="springframework.org/tags/form"
+
+Text fields
+-->Must add model attribute
+
+@RequestMapping("/showform)
+public String showMyPage(Model model) {
+	model.addAttribute("student", new Student());
+	return "main";
+}
+
+<form:form acion="processForm" modelAttribute="student">
+	<form:input path="firstName"/> -> calls student.getFirstName()
+	<form:input path="lastName"/> -> calls student.getLastName()
+</form:form>
+
+When form is submitted spring calls setter methods student.setFirstName() and student.setLastName()
+
+@RequestMapping("/processform)
+public String processForm(@ModelAttribute("student") Student student) {
+	student.getLastName();
+	return "helloworld"; -->/WEBINF/VIEW/helloworld.jsp
+}
+
+helloworld.jsp
+
+<html>full name ${student.firstName} ${student.lastName}</html>
+
+Dropdownlist
+<form:select path="county">
+	<form:option></form:option>
+</form:select>
+
+Radiobutton
+Java<form:radiobutton path="favlanguage" value="Java">
+PHP<form:radiobutton path="favlanguage" value="PHP">
+
+Checkbox
+Java<form:checkbox path="favlanguage" value="Java">
+PHP<form:checkbox path="favlanguage" value="PHP">
+
+MVC Form Validation
+
+Validation Features
+-required
+-validate length
+-validate numbers
+-validate with regular expression
+-custom validation
+
+@NotNull,@Min,@Max,@Size,@Pattern - regular expression,@Future/@Past - Date must be future or past
+Hibernate provide validator API
+Download the validation JAR files from Hibernate and add them
+
+Public class Customer {
+	@NotNull(message ="is Required")
+	@Size(min=1, message ="is Required")
+	private String name;
+}
+
+@Valid - perform validation 
+@RequestMapping("/processform)
+public String processForm(@Valid @ModelAttribute("customer") Student student, BindingResult theBindingResult) {
+	if(theBindingResult.hasErrors()) {
+		return "customeform";
+	}
+	return "helloworld"; -->/WEBINF/VIEW/helloworld.jsp
+}
+@Valid - perform validation on Customer Object and result is given to BindingResult
+
+When performing Spring MVC validation, the location of the BindingResult parameter is very important. In the method signature, the BindingResult parameter must appear immediately after the model attribute. 
+
+Display error messages
+<form:errors path="lastname" cssColor="error"/>
+
+preprocessing code with @initBinder - it works as preprocessor
+For every request this annotated method will be called
+
+@InitBinder
+public void initBinder(WebDataBinder dataBinder)
+
+Custom Form Validation
+--Create a new Annotation
+
+**************************************************************************************************************************************************************
+
+In Spring, InitializingBean and DisposableBean are two marker interfaces, a useful way for Spring to perform certain actions upon bean initialization and destruction.
+
+    For bean implemented InitializingBean, it will run afterPropertiesSet() after all bean properties have been set.
+    For bean implemented DisposableBean, it will run destroy() after Spring container is released the bean. after spring context is closed
+
+
+@ConfigurationProperties
+
+@ConfigurationProperties works best with hierarchical properties that all have the same prefix; 
+
+@Configuration
+@ConfigurationProperties(prefix = "mail")
+public class ConfigProperties {
+    
+    private String hostName;
+    private int port;
+    private String from;
+
+    // standard getters and setters
+}
+
+Note: If we don't use @Configuration in the POJO, then we need to add @EnableConfigurationProperties(ConfigProperties.class) in the main Spring application class to bind the properties into the POJO:
+
+@SpringBootApplication
+@EnableConfigurationProperties(ConfigProperties.class)
+public class EnableConfigurationDemoApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(EnableConfigurationDemoApplication.class, args);
+    }
+}
+
+That's it! Spring will automatically bind any property defined in our property file that has the prefix mail and the same name as one of the fields in the ConfigProperties class.
+
+As of Spring Boot 2.2, Spring finds and registers @ConfigurationProperties classes via classpath scanning. Therefore, there is no need to annotate such classes with @Component (and other meta-annotations like @Configuration), or even use the @EnableConfigurationProperties:
+
+@ConfigurationProperties(prefix = "mail") 
+public class ConfigProperties { 
+
+    private String hostName; 
+    private int port; 
+    private String from; 
+
+    // standard getters and setters 
+}
+
+The classpath scanner enabled by @SpringBootApplication finds the ConfigProperties class, even though we didn't annotate this class with @Component.
+
+In addition, we can use the @ConfigurationPropertiesScan annotation to scan custom locations for configuration property classes:
+
+@SpringBootApplication
+@ConfigurationPropertiesScan("com.baeldung.configurationproperties")
+public class EnableConfigurationDemoApplication { 
+
+    public static void main(String[] args) {   
+        SpringApplication.run(EnableConfigurationDemoApplication.class, args); 
+    } 
+}
+
+This way Spring will look for configuration property classes only in the com.baeldung.properties package.
+
+
+
+
+    Spring Boot uses a very particular PropertySource order that is designed to allow sensible overriding of values. Properties are considered in the following order:
+
+        Devtools global settings properties on your home directory (~/.spring-boot-devtools.properties when devtools is active).
+        @TestPropertySource annotations on your tests.
+        @SpringBootTest#properties annotation attribute on your tests.
+        Command line arguments.
+        Properties from SPRING_APPLICATION_JSON (inline JSON embedded in an environment variable or system property)
+        ServletConfig init parameters.
+        ServletContext init parameters.
+        JNDI attributes from java:comp/env.
+        Java System properties (System.getProperties()).
+        OS environment variables.
+        A RandomValuePropertySource that only has properties in random.*.
+        Profile-specific application properties outside of your packaged jar (application-{profile}.properties and YAML variants)
+        Profile-specific application properties packaged inside your jar (application-{profile}.properties and YAML variants)
+        Application properties outside of your packaged jar (application.properties and YAML variants).
+        Application properties packaged inside your jar (application.properties and YAML variants).
+        @PropertySource annotations on your @Configuration classes.
+        Default properties (specified using SpringApplication.setDefaultProperties).
+
+
+
+use @PropertySource annotation to externalize your configuration to a properties file. 
+
+@Configuration
+@ComponentScan(basePackages = { "com.mkyong.*" })
+@PropertySource("classpath:config.properties")
+public class AppConfigMongoDB {
+
+    //1.2.3.4
+    @Value("${mongodb.url}")
+    private String mongodbUrl;
+
+    //hello
+    @Value("${mongodb.db}")
+    private String defaultDb;
+}
+	
+Environment example
+@Configuration
+@ComponentScan(basePackages = { "com.mkyong.*" })
+@PropertySource("classpath:config.properties")
+public class AppConfigMongoDB {
+
+    @Autowired
+    private Environment env;
+
+    @Bean
+    public MongoTemplate mongoTemplate() throws Exception {
+
+        String mongodbUrl = env.getProperty("mongodb.url");
+        String defaultDb = env.getProperty("mongodb.db");
+	}
+}

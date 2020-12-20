@@ -1,0 +1,339 @@
+Spring AOP
+
+Aspect Oriented Programming
+
+-> Suppose we want to add logging to DAO methods -> We have to do change to all the methods of DAO
+
+-> Suppose we want to add security to DAO methods -> We have to do change to all the methods of DAO
+	-> If we need to add all methods of service layer -> We have to do change to all the methods of Service
+	-> If we have to add to entire system -> we have to do lot of changes
+
+-> Other possible solutions
+	-> Inheritance -> every class should implement this inheritance
+	-> Delegation -> Delegating to respective managers -> Still every method has to be changed
+	
+Aspect can be used at multiple locations
+Sample aspect/class ... applied based on configuration
+
+-> applies the proxy design pattern
+-> Much better than being scattered everywhere
+-> Promotes code reuse and easier to change
+-> Business code in application is cleaner
+-> Reduces code complexity
+-> Configurable - Based on configuration, apply Aspects selectively to different parts of app
+				-> No need to make changes to any part of code
+
+Most Common
+	-> Logging,Security, transactions
+Audit Logging
+	-> Who, what, when, where
+Exception Handling
+	-> log exception and notify devops via SMS/email
+API Management
+	-> How many times has a method been called
+	-> analytics: What are peak times? What is average load? Who is top user?
+Advantages
+	-> Resuable Modules
+	-> Resolve code tangling
+	-> Resolve code scatter
+	-> Applied selectively based on configuration
+Disadvantages
+	-> Too many aspects and app flow is hard to follow
+	-> Mnior performance cost for aspect execution
+	
+Aspect -> module of code for cross cutting concern(logging, security....)
+Advice -> What action is taken and when it should be applied
+Joint Point -> When to apply code during program execution
+Pointcut -> A Predicate Expression for where advice should be applied
+
+Advice types
+ -> Before Advice - run before the method
+ -> After finally advice - run after the method (finally)
+ -> After returning advice - run after the method (success execution)
+ -> After throwing advice - run after method(if execption is thrown)
+ -> Around Advice - run before and after method
+ 
+Weaving 
+	Connecting aspects to target objects to create an advised object
+	Different types of weaving
+		-> compile time and runtime
+Two Leading Frameworks
+
+Spring AOP and AspectJ
+
+Spring provides AOP Support
+Key Components of Spring
+	Security, Caching,Transactions
+	Use runtime weaving of aspects
+	Uses Proxy pattern
+Advantages
+	-> Simpler to use than AspectJ
+	-> Use Proxy Pattern
+	-> Can Migrate to AspectJ when @Aspect is used
+Disadvantages
+	-> Only supports method-level joint points
+	-> Can only aspects to beans created by Spring app context
+	-> Minor performance cost because of runtime weaving
+
+
+
+AspectJ
+	-> Provides complete support of AOP
+	-> join supports: method level, constructor and field
+	-> code weaving: compile time,post compile-time and loading
+
+Advantages
+	-> Support all joint points
+	-> Support any POJO not only beans created by spring
+	-> Faster performance
+	-> Complete AOP support
+Disadvantages
+	-> Compile-time Weaving requires extra compilation setup
+	-> AspectJ pointcut syntax can become complex
+	
+@Before Advice
+Main App ----> AOP Proxy -----> Target Object
+Runs before calling the target object
+
+Even though we using Spring AOP ..still need AspectJ Jar file
+Spring AOP uses some of the AspectJ annotations and AspectJ classes
+
+To enable AspectJ --> Add @EnableAspectJAutoProxy to spring onfiguration class
+
+1.
+@Configuration
+@EnableAspectJAutoProxy
+@ComponentScan("<base package>")
+public class SpringConfig {
+}
+
+2.
+Main App
+AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(DemoConfig.class);
+AccountDAO dao = context.getBean("accountDAO", AccountDAO.class);
+dao.addAccount();
+context.close();
+
+3. Create Aspect Module
+@AspectJ
+@Component
+public class myDemoAspect {
+	@Before("execution(public void addAccount())") --> pointcut expression --> tells spring this code has to run before running addAccout
+	public void beforeAddAccount() {
+		
+	}
+}
+
+
+Pointcut expression language
+	->execution(modifiers-pattern? return-type-pattern declaring-type-pattern? method-name-pattern(param-pattern) thorws-pattern?)
+	
+	modifiers-pattern - Spring only supports public or *
+	modifiers-pattern,declaring-type-pattern and thorws-pattern are optional
+	pattern is optional if it as ?
+	for patterns we can use * to match on everything
+	
+	Ex:- @Before("execution(public void com.package.addDAOaccout(parameter))")
+	match on every class -> @Before("execution(public void addDAOaccout(parameter))")
+	Any match starting with add @Before("execution(public void add*(parameter))")
+	Any match starting with processCreditCard and return verificationResult 
+		--> @Before("execution(public verificationResult processCreditCard*(parameter))")
+	Any method starts with processCreditCard with any public accessor and any return type --> @Before("* * processCreditCard*())")
+	modifier is optional --> @Before("* processCreditCard*())")
+	
+Parameters pattern
+	() -> matches a method without parameters
+	(*) -> matches a method with one argument of any type
+	(..) -> matches a method with 0 or more arguments of any type
+	
+	Match with any method of any class of a package
+	@Before("execution(* com.luv2code.aopdemo.demo.*.*(..))") -> Matches with any class of any method with 0 or more aguments in com.luv2code.aopdemo.demo package
+
+Pointcut declarations
+	-> How to reuse a pointcut expression for diffent aspect methods
+	-> 1. Create a pointcut declaration
+		@Pointcut("execution(* com.luv2code.aopdemo.dao.*.*(..))")
+		private void forDaoPackage() {} --> Name of pointcut expression
+	-> Apply pintcut declaration name to other methods
+		@Before("forDaoPackage()") -->//use pointcut declaration time
+		public void method1() {}
+		
+		@Before("forDaoPackage()")
+		public void method2() {}
+		
+Combining pointcuts
+	->How to aply multiple pointcut expressions to a single advice
+	->Execute an advice if only certain conditions are method
+	->Example
+		->All methods in a package except getter/setter
+	->can combine  pointcut expressions using logic operators
+		AND(&&)
+		OR(||)
+		NOT(!)
+	->Ex- 	@Before("expressionOne() && expressionTwo()")
+			@Before("expressionOne() || expressionTwo()")
+			@Before("expressionOne() && !expressionTwo()")
+	->Ex:- except getter and setter
+	@Pointcut("execution(* com.luv2code.aopdemo.aop.*.*(..))")
+	private void forDaoPackage(){}
+	
+	@Pointcut("execution(* com.luv2code.aopdemo.aop.*.get*(..))")
+	private void getter(){}
+	
+	@Pointcut("execution(* com.luv2code.aopdemo.aop.*.set*(..))")
+	private void setter(){}
+	
+	@Pointcut("forDaoPackage() && !(setter() && getter())")
+	private void method1(){}
+
+Ordering Aspects
+	->How to control the order of advices being applied
+		->If more than one advice satisfied for method -> spring will take random order
+			->place advices in separate aspects
+			->Add @Order to aspects
+			-> Lower numbers have high precendence
+		->
+			@Aspect
+			@Component
+			@Order(1)
+			public class MyFirstAspect() {
+			}
+			
+			@Aspect
+			@Component
+			@Order(2)
+			public class MySecondAspect() {
+			}
+			
+			@Aspect
+			@Component
+			@Order(3)
+			public class MySecondAspect() {
+			}
+			
+			Range: Integer.MIN_VALUE to Integer.MAX_VALUE
+			Negative numbers are allowed
+
+JoinPoints
+	-> How to get method params and signature in aspect method
+	
+	Ex:- @Before("..")
+	public void beforeAddAccountAdivce(JoinPoint theJointPoint) {
+		MethodSignature methodSig = (MethodSignature)theJointPoint.getSignature(); --> to get method signature
+		Object[] args = theJointPoint.getArgs();
+		
+	}
+
+@AfterReturning - run after successful execution of method
+@AfterReturning(
+	pointcut="execution(* com.luv2code.aopdemo.demo.accountDAO.findAccounts(..))",
+	returning="result") --> returning parameter "result" holds the return value of method
+public void afterReturningFindAccountService(JointPoint theJointPoint, List<Account> result) {
+}
+
+Post process the data before returning to caller
+format the data before returning the caller
+
+@AfterReturning(
+	pointcut="execution(* com.luv2code.aopdemo.demo.accountDAO.findAccounts(..))",
+	returning="result") --> returning parameter "result" holds the return value of method
+public void afterReturningFindAccountService(JointPoint theJointPoint, List<Account> result) {
+	if(!result.isEmpty()) {
+		result.add("modified");--> Modifying the result before returning to caller
+	}
+}
+
+@AfterThrowing
+- After any exception is thrown
+
+		findAccounts()				findAccounts()				exception
+Main App -------------> AOP Proxy -----------------> AccountDAO ----------> @AfterThrowing advice
+		<-------------            <-------------------------------------------
+			exception						exception
+			
+Uses
+	-> Logging exception
+	-> Perform auditing on exception
+	-> send mail to devops
+	-> encapsulate the functionality in aspect and reuse
+	
+@AfterThrowing	(
+	pointcut="execution(* com.luv2code.aopdemo.dao.AccountDAO.findAccounts(..))",
+	throwing="throwExec"
+	)
+public void afterThrowingAdvice(JointPoint jointpoint, Throwable throwExec) {
+	
+}
+
+	-> we are just intercepting the exception
+	-> Still the exception will propogate to main App
+	
+@After Advice Type
+	- It will run after completion of method regradless of success or failure
+
+
+- if advice methods defined in the same @Aspect class that need to run at the same join point
+- the @After advice method is invoked AFTER any @AfterReturning or @AfterThrowing advice methods in the same aspect class
+So in our case, the @After and @AfterThrowing are in the same aspect class
+
+
+@Around advice
+	-> runs before and after completion of method
+	-> its like combination of Before and After
+	-> uses
+		-> Logging, auditing, security
+		-> Pre-processing and post-processing data
+		-> Instrumentation/profiling code
+		-> Managing exceptions -> Swallow/handle/stop exceptions
+	-> get reference to proceeding joint point
+	-> This is to handle target method
+	-> your code can use the proceeding joint point to execute  target method
+	
+	@Around("execution(* com.luv2code.aopdemo.service.*.getFortune(..))")
+	public Object afterGetfortune(ProceedingJointPoint proceddingJointPoint) throws Throwable {
+		long begin = System.currentTimeMilis();
+		Object result = proceddingJointPoint.proceed();
+		long end = System.currentTimeMilis();
+		long duration =  end-start;
+		return result; --> returning result to calling function
+	}
+	
+	Handle Exceptions
+		-> can handle/rethrow exception
+		
+	@Around("execution(* com.luv2code.aopdemo.service.*.getFortune(..))")
+	public Object afterGetfortune(ProceedingJointPoint proceddingJointPoint) throws Throwable {
+		long begin = System.currentTimeMilis();
+		try {
+			Object result = proceddingJointPoint.proceed();
+		} catch(Exception e) {
+			//handle exception
+			return "Exception";
+		}
+		long end = System.currentTimeMilis();
+		long duration =  end-start;
+		return result; --> returning result to calling program
+	}
+	
+	Rethrowing Exceptions
+	
+	@Around("execution(* com.luv2code.aopdemo.service.*.getFortune(..))")
+	public Object afterGetfortune(ProceedingJointPoint proceddingJointPoint) throws Throwable {
+		long begin = System.currentTimeMilis();
+		try {
+			Object result = proceddingJointPoint.proceed();
+		} catch(Exception e) {
+			//handle exception
+			throw e;
+		}
+		long end = System.currentTimeMilis();
+		long duration =  end-start;
+		return result; --> returning result to calling program
+	}
+	
+Real time example with AOP
+	->Enable AspectJ Auto Proxy(XML)
+		<aop:aspectj-autoproxy> -> spring supports the @Aspect class
+	-> Java configuration -> @EnableAspectJAutoProxy
+
+	

@@ -1,0 +1,29 @@
+npm install -g @oracle/ojet-cli -- install command line interface
+
+For example, the following command will create a web application in the web-app-navbar directory using the web version of the navbar template:
+
+ojet create web-app-navbar --template=navbar
+
+package.json - Defines npm dependencies and project metadata.
+
+Use the Oracle JET command-line interface (CLI) to build a development version of your web application before serving it to a browser. This step is optional.
+
+Change to the application’s root directory and use the ojet build command to build your application.
+
+ojet build 
+
+Use "ojet serve" to run your web application in a local web server for testing and debugging. 
+
+
+The Oracle JET hooks system defines various script trigger points, also called hook points, that allow you to customize the create, build, serve and restore workflow across the various command-line interface processes. Customization relies on script files and the script code that you want to trigger for a particular hook point.
+
+after_app_create - This hook point triggers the script with the default name after_app_create.js immediately after the tooling concludes the create application process. A script for this hook point can be used with a web application or a hybrid mobile application.
+
+after_app_restore - This hook point triggers the script with the default name after_app_restore.js immediately after the tooling concludes the restore application process. A script for this hook point can be used with a web application or a hybrid mobile application. 
+
+before_build - This hook point triggers the script with the default name before_build.js immediately before the tooling initiates the build process.
+
+before_release_build -  This hook point triggers the script with the default name before_release_build.js
+
+ojet build -- before_build -- build process copies the libraries into web folder -- after_build
+ojet server -- before build -- build process -- after_build -- before serve -- serve process - serve process connects to and watches the app -- after serve

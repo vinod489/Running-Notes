@@ -1,0 +1,772 @@
+Dependency Injection 
+ -- Injecting the objects whenever and whatver required by the container instead of creating them manually
+ 
+ Spring configuration file -- any xml file in application folder
+ 
+ Example configuration file where we can define beans 
+ <?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/context
+    http://www.springframework.org/schema/context/spring-context.xsd">
+
+	<context:property-placeholder location="classpath:sport.properties"/>
+    <!-- Define your beans here -->
+    <bean id="loggerConfig" class="com.tutorials.spring.springdemo.LoggerConfig" init-method="initLogger">
+    	<property name="rootLoggerLevel" value="INFO" />
+    	<property name="printedLoggerLevel" value="INFO"/>
+    </bean>
+    
+    
+    <bean id="myFortuneService" class="com.tutorials.spring.springdemo.HappyFortuneService">
+    </bean>
+    
+    <bean id="myCoach" class="com.tutorials.spring.springdemo.TrackCoach">
+    	<constructor-arg ref="myFortuneService"></constructor-arg>
+    </bean>
+	
+	
+    <bean id="cricketCoach" class="com.tutorials.spring.springdemo.CricketCoach">
+    	<property name="fortuneService" ref="myFortuneService"></property>
+    	<property name="emailAddress" value="${prop.email}"></property>
+    	<property name="team" value="${prop.team}"></property>
+    </bean>
+    
+    <bean id="randomFortuneService" class="com.tutorials.spring.springdemo.RandomFortuneService">
+    </bean>
+    
+    <bean id="randomCoach" class="com.tutorials.spring.springdemo.RandomFortuneCoach">
+    	<constructor-arg ref="randomFortuneService"></constructor-arg>
+    </bean>
+/beans>
+
+To make this xml file as a spring container we have to use
+
+ClassPathXmlApplicationContext context =  new ClassPathXmlApplicationContext("applicationContext.xml");
+
+context -- will be a container
+
+we can get beans from container by using
+
+Coach myCoach = context.getBean("myCoach", Coach.class);
+
+
+Defining beans in xml
+
+<bean id="" class="">
+	
+</bean>
+
+Implicit AutoWire can be done for only non-primitive 
+Explicit auto wire should be done
+
+AnnotationConfigApplicationContext(config.class) // for getting the container from java configuration class
+
+XML configuration - Wiring using propertytags
+XML configuration - byName and byType
+XML + Autowiring - <context:annotation-config>
+AutoWiring - <context:componentscan>
+AutoDiscovery - @Component
+
+We cannot make autodiscovery for library classes like jdbctemplate/
+
+
+springboot starters used to make quick start of application by providing the default configuration
+providing a default configuration is called autoconfiguration
+Spring Boot looks at 
+a) Frameworks available on the CLASSPATH 
+b) Existing configuration for the application. Based on these, Spring Boot provides basic configuration needed to configure the application with these frameworks. This is called Auto Configuration.
+
+
+using sprint boot starter parent gives the adavantage of not definig of versions for other libraries
+
+spring.provides in a jar gives a information about what that jar includes
+
+Spring boot is a spring project used to create spring based applications development quickly with default configurations and dependencies.
+It is used to create stand-alone production -grade applications - Used to create POCs simply for applications
+MVP- minimum viewable project
+
+JarLauncher and WarLauncher
+When a springbootmaven jar or war plugin is used to make project as a executable jar or war file JarLaucher/Warlauncher classes will be inclueded in project jar or War file. In the Mainfiest file JarLauncher/WarLauncher will be given as main class and the main method class is given as start class
+JarLauncher/WarLauncher will invoke the class with @SpringBootApplication annotation
+
+org.springframework.boot.SpringApplication.class
+-- provides static convenience metods to make it easy to create stand-along spring application
+--job is to create and refresh appropriate Application Context
+
+User defined starter - starter name will be precedded like vinod-spring-boot-starter but for a predefined it is succedded like spring-boot-starter-web
+--SpringApplication.run returns the ApplicationContext which is a container
+
+Sep/18/2020
+
+Soring boot dependency - its a maven or gradle dependency-- provide all the required dependencies- no need to hunt for all the required librariers	
+
+SpringBoot Starters - gives us the required libraries/dependencies for the functionality
+Spring Boot startes can contain other startes also
+
+Each starter contains the classes that provides AutoConfiguration
+
+For example in jdbc starter - we have class for DstaSourceConfiguration like DataSourceAutoConfiguration
+
+And each AutoConfiguration class has a properties class that can read the properties from application.properties files and build a bean
+In the properties classes it will define the prefix of the property needs to be taken from application.properties/application.yml
+
+For example for spring jdbc -> prefix is defined as spring.jdbc
+
+Again in the AutoConfiguration there may be more than one implementation which provides a default configuration
+Like in jdbc we have Hikari connection pooling which is a first priority, tomcat connection pooling, dbcp connection pooling, dbcp2 connection pooling
+and finally Generic connection pooling
+
+Each connection pooling implementation has a @ConditionOnProperty Annotation to provide that implementation when that property is available in proeprties file
+
+For example for Hikari connection pooling - it will be returned when a specific type is given
+When no type is specified in properties file a Gneric connection pooling implementation is given
+
+##not sure -- The order of implementation classes will be changed from version to version
+
+Sep/19/2020
+
+@SpringBootApplication - It will specify from where processing starts
+@SpringBootConfiguration - Its like @Configuration annotation for registering configuration class
+@EnableAutoConfiguration
+
+AutoConfigurationPackages is a class to store all the auto configuration packages for refering later - it wil store all the packages with @AutoConfiguration annotation
+
+@ConditionalOnClass
+@ConditionalOnProperty
+@ConditionOnMissingBean
+
+
+Why do we need Spring Boot Auto Configuration?
+Spring based applications have a lot of configuration.
+
+When we use Spring MVC, we need to configure component scan, Dispatcher Servlet, a view resolver, web jars(for delivering static content) among other things.
+<bean
+        class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="prefix">
+            <value>/WEB-INF/views/</value>
+        </property>
+        <property name="suffix">
+            <value>.jsp</value>
+        </property>
+  </bean>
+  
+  <mvc:resources mapping="/webjars/**" location="/webjars/"/>
+  
+  Below code snippet shows typical configuration of a Dispatcher Servlet in a web application.
+
+    <servlet>
+        <servlet-name>dispatcher</servlet-name>
+        <servlet-class>
+            org.springframework.web.servlet.DispatcherServlet
+        </servlet-class>
+        <init-param>
+            <param-name>contextConfigLocation</param-name>
+            <param-value>/WEB-INF/todo-servlet.xml</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>dispatcher</servlet-name>
+        <url-pattern>/</url-pattern>
+    </servlet-mapping>
+When we use Hibernate/JPA, we would need to configure a data source, an entity manager factory, a transaction manager among a host of other things.
+
+    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource"
+        destroy-method="close">
+        <property name="driverClass" value="${db.driver}" />
+        <property name="jdbcUrl" value="${db.url}" />
+        <property name="user" value="${db.username}" />
+        <property name="password" value="${db.password}" />
+    </bean>
+
+    <jdbc:initialize-database data-source="dataSource">
+        <jdbc:script location="classpath:config/schema.sql" />
+        <jdbc:script location="classpath:config/data.sql" />
+    </jdbc:initialize-database>
+
+    <bean
+        class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean"
+        id="entityManagerFactory">
+        <property name="persistenceUnitName" value="hsql_pu" />
+        <property name="dataSource" ref="dataSource" />
+    </bean>
+
+    <bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+        <property name="entityManagerFactory" ref="entityManagerFactory" />
+        <property name="dataSource" ref="dataSource" />
+    </bean>
+
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+
+Above examples are typical with any Spring framework implementation or integration with other frameworks.
+
+Spring Boot : Can we think different?
+Spring Boot brings in new thought process around this.
+
+Can we bring more intelligence into this? When a spring mvc jar is added into an application, can we auto configure some beans automatically?
+
+How about auto configuring a Data Source if Hibernate jar is on the class-path?
+How about auto configuring a Dispatcher Servlet if Spring MVC jar is on the class-path?
+There would be provisions to override the default auto configuration.
+
+Spring Boot looks at a) Frameworks available on the CLASSPATH b) Existing configuration for the application. Based on these, Spring Boot provides basic configuration needed to configure the application with these frameworks. This is called Auto Configuration.
+
+
+Where is Spring Boot Auto Configuration implemented?
+All auto configuration logic is implemented in spring-boot-autoconfigure.jar. All auto configuration logic for mvc, data, jms and other frameworks is present in a single jar.
+
+
+Other important file inside spring-boot-autoconfigure.jar is /META-INF/spring.factories. This file lists all the auto configuration classes that should be enabled under the EnableAutoConfiguration key. A few of the important auto configurations are listed below.
+
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+org.springframework.boot.autoconfigure.aop.AopAutoConfiguration,\
+org.springframework.boot.autoconfigure.MessageSourceAutoConfiguration,\
+org.springframework.boot.autoconfigure.PropertyPlaceholderAutoConfiguration,\
+org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration,\
+org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,\
+org.springframework.boot.autoconfigure.jdbc.JdbcTemplateAutoConfiguration,\
+org.springframework.boot.autoconfigure.jdbc.JndiDataSourceAutoConfiguration,\
+org.springframework.boot.autoconfigure.jdbc.XADataSourceAutoConfiguration,\
+org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration,\
+org.springframework.boot.autoconfigure.security.SecurityAutoConfiguration,\
+org.springframework.boot.autoconfigure.security.SecurityFilterAutoConfiguration,\
+org.springframework.boot.autoconfigure.web.DispatcherServletAutoConfiguration,\
+org.springframework.boot.autoconfigure.web.EmbeddedServletContainerAutoConfiguration,\
+org.springframework.boot.autoconfigure.web.ErrorMvcAutoConfiguration,\
+Example Auto Configuration
+We will take a look at DataSourceAutoConfiguration.
+
+Typically all Auto Configuration classes look at other classes available in the classpath. If specific classes are available in the classpath, then configuration for that functionality is enabled through auto configuration. Annotations like @ConditionalOnClass, @ConditionalOnMissingBean help in providing these features!
+
+@ConditionalOnClass({ DataSource.class, EmbeddedDatabaseType.class }) : This configuration is enabled only when these classes are available in the classpath.
+
+@Configuration
+@ConditionalOnClass({ DataSource.class, EmbeddedDatabaseType.class })
+@EnableConfigurationProperties(DataSourceProperties.class)
+@Import({ Registrar.class, DataSourcePoolMetadataProvidersConfiguration.class })
+public class DataSourceAutoConfiguration {
+@ConditionalOnMissingBean : This bean is configured only if there is no other bean configured with the same name.
+
+@Bean
+@ConditionalOnMissingBean
+public DataSourceInitializer dataSourceInitializer() {
+	return new DataSourceInitializer();
+}
+Embedded Database is configured only if there are no beans of type DataSource.class or XADataSource.class already configured.
+
+@Conditional(EmbeddedDatabaseCondition.class)
+@ConditionalOnMissingBean({ DataSource.class, XADataSource.class })
+@Import(EmbeddedDataSourceConfiguration.class)
+protected static class EmbeddedDatabaseConfiguration {
+}
+
+Debugging Auto Configuration
+There are two ways you can debug and find more information about auto configuration.
+
+Turning on debug logging
+Using Spring Boot Actuator
+Debug Logging
+You can turn debug logging by adding a simple property value to application.properties. In the example below, we are turning on Debug level for all logging from org.springframework package (and sub packages).
+
+logging.level.org.springframework: DEBUG
+When you restart the application, you would see an auto configuration report printed in the log. Similar to what you see below, a report is produced including all the auto configuration classes. The report separates the positive matches from negative matches. It will show why a specific bean is auto configured and also why something is not auto configured.
+
+=========================
+AUTO-CONFIGURATION REPORT
+=========================
+
+Positive matches:
+-----------------
+DispatcherServletAutoConfiguration matched
+ - @ConditionalOnClass classes found: org.springframework.web.servlet.DispatcherServlet (OnClassCondition)
+ - found web application StandardServletEnvironment (OnWebApplicationCondition)
+
+
+Negative matches:
+-----------------
+ActiveMQAutoConfiguration did not match
+ - required @ConditionalOnClass classes not found: javax.jms.ConnectionFactory,org.apache.activemq.ActiveMQConnectionFactory (OnClassCondition)
+
+AopAutoConfiguration.CglibAutoProxyConfiguration did not match
+ - @ConditionalOnProperty missing required properties spring.aop.proxy-target-class (OnPropertyCondition)
+
+
+Spring Boot Actuator
+Other way to debug auto configuration is to add spring boot actuator to your project. We will also add in HAL Browser to make things easy.
+
+<dependency>
+	<groupId>org.springframework.boot</groupId>
+	<artifactId>spring-boot-starter-actuator</artifactId>
+</dependency>
+
+<dependency>
+	<groupId>org.springframework.data</groupId>
+	<artifactId>spring-data-rest-hal-browser</artifactId>
+</dependency>
+
+
+HAL Browser auto configuration http://localhost:8080/actuator/#http://localhost:8080/autoconfig would show the details of all the beans which are auto configured and those which are not.
+
+49. Creating Your Own Auto-configuration
+If you work in a company that develops shared libraries, or if you work on an open-source or commercial library, you might want to develop your own auto-configuration. Auto-configuration classes can be bundled in external jars and still be picked-up by Spring Boot.
+
+49.1 Understanding Auto-configured Beans
+Under the hood, auto-configuration is implemented with standard @Configuration classes. Additional @Conditional annotations are used to constrain when the auto-configuration should apply. Usually, auto-configuration classes use @ConditionalOnClass and @ConditionalOnMissingBean annotations. This ensures that auto-configuration applies only when relevant classes are found and when you have not declared your own @Configuration.
+
+49.2 Locating Auto-configuration Candidates
+Spring Boot checks for the presence of a META-INF/spring.factories file within your published jar. The file should list your configuration classes under the EnableAutoConfiguration key, as shown in the following example:
+
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+com.mycorp.libx.autoconfigure.LibXAutoConfiguration,\
+com.mycorp.libx.autoconfigure.LibXWebAutoConfiguration
+[Note]
+Auto-configurations must be loaded that way only. Make sure that they are defined in a specific package space and that they are never the target of component scanning. Furthermore, auto-configuration classes should not enable component scanning to find additional components. Specific @Imports should be used instead.
+
+You can use the @AutoConfigureAfter or @AutoConfigureBefore annotations if your configuration needs to be applied in a specific order. For example, if you provide web-specific configuration, your class may need to be applied after WebMvcAutoConfiguration.
+
+If you want to order certain auto-configurations that should not have any direct knowledge of each other, you can also use @AutoConfigureOrder. That annotation has the same semantic as the regular @Order annotation but provides a dedicated order for auto-configuration classes.
+
+Sep/22/2020
+
+spring-boot-parent
+spring-boot-dependencies - only one parent is allowed in maven. If we have our own plugin, in that case we should use this
+dependency
+<dependencymanagement><dependency></dependency></dependencymanagement>
+scope - import
+
+Sep/24/2020
+Environment is a bean Autowired for properties defined in @PropertySource annotation and application.properties file
+Environment.getProperty
+SpringDispatcherServlet 
+- First goes to HandlerMapping for getting the mapped controller
+- HandlerMapping gets the controller for given mapping- It scans all the class with @RequestMapping/@GetMapping
+- After receving the response from controller - get ViewResolver
+- After that get ThemeResolver
+
+Sep/25/2020
+SpringBootServletInitializer - this class has to be extended by @SpringBootApplication annoated class to get Spring Dispatcher Sevlet
+By default spring-starter-web comes with tomcat catalina engine
+If we want jsp engine - we have to include jasper engine in pom.xml
+
+Sep/26/2020
+We can get properties defined in application.properties by using Container object
+ApplicationContext context = SpringApplication.run(<SpringApplication.class>);
+context.getEnvironment.getProperty();
+in Maven<packaging>war</packaging> - war file will be create or else jar file
+
+Fat jar - Executable jar/war file - contains project code and all dependencies
+		- spirng-boot-maven-plugin
+		
+Sep/29/2020
+spring-boot-dependencies - We can get dependencies but not plugin management
+even we include spirng-boot-maven-plugin without spring boot starter parent - it wont work
+- because we wont get other supporting plugins for maven plugin
+- In the fat war we will have WEB-INF/lib-provided folder - we will ge the spring jars like tomcat, webmvc and a pages folder
+	- BOOT-INF/classes, BOOT-INF/lib
+- In the fat jar we will have BOOT-INF/lib folder contains the spring libraries for launching the jar and we wont have pages folder
+	- WEB-INF/classes, WEB-INF/lib, WEB-INF/lib-provided
+- If we need WEB-INF directory we have to go with war packaging
+
+3 types of launcher classes inheirted from Launcher class
+jarLauncher, WarLauncher and PropertiesLauncher
+
+spring boot support nested jars/wars like jar inside another jar
+nested paths are fixed lib/*.jar for jar launcher and lib-provided/*.jar for war launcher
+Properties launcher look in lib/ location by default and we can specify an additional directories to load jars from other locations
+by using LOADER_PATH or loader.path in application.properties
+
+The spring-boot-loader modules allows Spring Boot to support executable jar and war files
+
+Jar structure
+
+example.jar
+ |
+ +-META-INF
+ |  +-MANIFEST.MF
+ +-org
+ |  +-springframework
+ |     +-boot
+ |        +-loader
+ |           +-<spring boot loader classes>
+ +-BOOT-INF
+    +-classes
+    |  +-mycompany
+    |     +-project
+    |        +-YourClasses.class
+    +-lib
+       +-dependency1.jar
+       +-dependency2.jar
+	   
+War Structure
+
+example.war
+ |
+ +-META-INF
+ |  +-MANIFEST.MF
+ +-org
+ |  +-springframework
+ |     +-boot
+ |        +-loader
+ |           +-<spring boot loader classes>
+ +-WEB-INF
+    +-classes
+    |  +-com
+    |     +-mycompany
+    |        +-project
+    |           +-YourClasses.class
+    +-lib
+    |  +-dependency1.jar
+    |  +-dependency2.jar
+    +-lib-provided
+       +-servlet-api.jar
+       +-dependency3.jar
+
+Dependencies should be placed in a nested WEB-INF/lib directory. Any dependencies that are required when running embedded but are not required when deploying to a traditional web container should be placed in WEB-INF/lib-provided.
+
+Shaded Jars
+
+30/Sep/2020
+
+Embedded Servers - tomcat, jetty and undertow
+by default tomcat embedded server will be there in starter
+by excluding tomcat and adding jetty dependency we can get jetty server
+we can use undertow server also
+
+By default spring boot starts give logging
+When using starters, Logback is used for logging by default.
+
+01/Sep/2020
+
+The various logging systems can be activated by including the appropriate libraries on the classpath and can be further customized by providing a suitable configuration file in the root of the classpath or in a location specified by the following Spring Environment property: logging.config.
+
+You can force Spring Boot to use a particular logging system by using the org.springframework.boot.logging.LoggingSystem system property. The value should be the fully qualified class name of a LoggingSystem implementation. You can also disable Spring Boot’s logging configuration entirely by using a value of none.
+
+[Note]
+Since logging is initialized before the ApplicationContext is created, it is not possible to control logging from @PropertySources in Spring @Configuration files. The only way to change the logging system or disable it entirely is via System properties.
+
+
+actuator in spring 1.X
+
+By default security is applicable on all end points. we have to disable it by using a property in application.properties
+spring.management.security-disabled=true;
+
+URL :- loclhost:8080/health, localhost:8080/info
+management.port=9090
+
+actuator in spring 2.X
+
+By default securtiy wont be applicable
+URL :- loclhost:8080/actuator/health, localhost:8080/actuator/info
+management.server.port=9090
+
+02/Sep/2020
+
+Spring boot devtools
+
+If we want to run some code after application is fully started and before SpringApplication.run() method
+CommandLineRunner -- interface
+This interface provides access to application arguments as string array. Let's see the example code for more clarity.
+
+1
+@Component
+public class CommandLineAppStartupRunner implements CommandLineRunner {
+3    private static final Logger logger = LoggerFactory.getLogger(CommandLineAppStartupRunner.class);
+4    @Override
+6	 public void run(String...args) throws Exception {
+7        logger.info("Application started with command-line arguments: {} . \n To kill this application, press Ctrl + C.", Arrays.toString(args));8
+    }
+}
+
+ApplicationRunner -- Interface
+
+ApplicationRunner wraps the raw application arguments and exposes the ApplicationArguments interface, which has many convinent methods to get arguments, like getOptionNames() to return all the arguments' names, getOptionValues() to return the agrument value, and raw source arguments with method getSourceArgs(). Let's see an example:
+
+1
+@Component
+public class AppStartupRunner implements ApplicationRunner {
+    private static final Logger logger = LoggerFactory.getLogger(AppStartupRunner.class);
+    @Override
+	public void run(ApplicationArguments args) throws Exception {
+        logger.info("Your application started with option names : {}", args.getOptionNames());
+    }
+}
+
+When to Use It
+When you want to execute some piece of code exactly before the application startup completes, you can use it then. In one of our projects, we used these to source data from other microservices via service discovery, which was registered in Consul.
+
+Ordering
+You can register as many application/command line runners as you want. You just need to register them as Beans in the application context. Then, Spring will automatically pick them up. You can order them as well either by extending interface org.springframework.core.Ordered or via the @Order annotation.
+
+This is all about the application/command line runners. You can also see org.springframework.boot.autoconfigure.batch.JobLauncherCommandLineRunner in spring-batch, which implements CommandLineRunner to register and start batch jobs at application startup.
+
+03/Sep/2020
+
+Callbacks can be done by using function pointers in C
+After springboot started .. Springboot get all the beans from context and check which bean implements CommandLineRunner/ApplicationlineRunner
+and calls run method on that methods
+These runners are like callback for SpringBoot Startup run method
+
+With the application line runner we will get command line arguments with the wrapper of ApplicationArguments
+from application arguments we can get optional and non-optional arguments separately
+
+06/Sep/2020
+To include Hikari connection pooling
+
+Spring Boot 1.x uses the Tomcat JDBC Connection Pool by default.
+
+As soon as we include spring-boot-starter-data-jpa into our pom.xml, we'll transitively include a dependency to the Tomcat JDBC implementation. During runtime, Spring Boot will then create a Tomcat DataSource for us to use.
+
+To configure Spring Boot to use the Hikari Connection Pool instead, we have two options.
+
+First, we need to include the dependency on Hikari in our pom.xml:
+
+<dependency>
+    <groupId>com.zaxxer</groupId>
+    <artifactId>HikariCP</artifactId>
+    <version>3.2.0</version>
+</dependency>
+
+
+The safest way to tell Spring Boot to use Hikari is configuring the DataSource implementation explicitly.
+
+To do this, we simply set the property spring.datasource.type to the fully-qualified name of the DataSource implementation we want to use:
+
+@RunWith(SpringRunner.class)
+@SpringBootTest(
+    properties = "spring.datasource.type=com.zaxxer.hikari.HikariDataSource"
+)
+public class HikariIntegrationTest {
+ 
+    @Autowired
+    private DataSource dataSource;
+ 
+    @Test
+    public void hikariConnectionPoolIsConfigured() {
+        assertEquals("com.zaxxer.hikari.HikariDataSource", dataSource.getClass().getName());
+    }
+}
+
+The second option is to let Spring Boot find the Hikari DataSource implementation itself.
+
+If Spring Boot cannot find the Tomcat DataSource in the classpath, it will automatically look for the Hikari DataSource next. The discovery algorithm is described in the reference manual.
+
+To remove the Tomcat Connection Pool from the classpath we can exclude it in our pom.xml:
+
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-jpa</artifactId>
+    <exclusions>
+        <exclusion>
+            <groupId>org.apache.tomcat</groupId>
+            <artifactId>tomcat-jdbc</artifactId>
+         </exclusion>
+     </exclusions>
+</dependency>
+
+JPA came after Hibernate
+alternate to hibernate is ibatis/Toplink/
+Entity Manager - Either it is application managed or container managed - jBoss/Websphere/Weblogic
+presistance.xml
+
+Spring-boot-starter-data-jpa
+
+What Is Spring Data JPA?
+Spring Data is a part of the Spring Framework. The goal of Spring Data repository abstraction is to significantly reduce the amount of boilerplate code required to implement data access layers for various persistence stores.
+
+Spring Data JPA is not a JPA provider. It is a library/framework that adds an extra layer of abstraction on the top of our JPA provider (like Hibernate).
+
+07/Sep/2020
+We can map java objects with table
+Mapping information given in persesitance can be done with few annotations - @Entity/@Id/@Column etc
+
+Can be annotated with @Entity or can be defined in persistance.xml
+
+We can acquire EntityManagerFactory using Persistance class
+
+10/Sep/2020
+org.springframework.orm.jpa.LocateEntityManagerFactoryBean
+JPA with toplink and hiberant
+Spring JPA - XML configuration
+Spring JPA - Java configuration
+
+LocateContainerEntityManagerFactoryBean
+
+12/Sep/2020
+
+Spring Data JPA
+The goal of Spring Data repository abstraction is to significantly reduce the amount of boilerplate code required to implement data access layers for various persistence stores.
+
+CrudRepository - Spring JPA
+Spring-Boot-Data-Jpa - Auto Configuration, no need to define LocateContainerEntityManagerFactoryBean, no need for transactionManger
+Dynamic Proxy
+
+
+13/Sep/2020
+JpaRepository
+CrudRepository
+PagingAndSortngRepository
+
+JpaRepository extends PagingAndSortngRepository
+ReactiveCrudRepository
+
+Entity Object states
+Transient, Managed, Detached, Removed
+
+15/Sep/2020
+spring-boot-starter-test
+spring-boot-starter-atcivemq
+
+
+16/Sep/2020
+Database Initialization
+sping.jpa.generate-ddl
+sping.jpa.hibernate.ddl-auto
+@EnableJpaRepositories
+
+lambok @Getter and @Setter - Java Annotation Processor
+
+17/Sep/2020
+data.sql - insert/update script to run after application started
+schema.sql - Create script to create tables after application started
+PagingAndSortngRepository
+
+22/Sep/2020
+Exception handling in Spring Boot
+Spring Cloud - provide tools for developers 
+
+23/Sep/2020
+Micoservices  - Car
+
+24/Sep/2020
+Service to Service Communiction - Synchronous and asynchronous
+Synchronous communication - HTTP REST and Google Remote Procedure calling (gRPC)
+asynchronous communication - Event Based (JMS based)
+Rest Services can be consumed using RestTemplate.
+RestTemplate restTemplte = new RestTemplate();
+restTemplte.getForEntity(url, <entity class>);
+
+27/Sep/2020
+
+12 factor apps
+
+29/Nov/2020
+
+-> Previous topics
+- FeignClient - When a RestTemplate is used to call the other microservices we have to pass the service URL name	
+			  - This is same for calling all the microservices..for every call we have to call service its IP
+			  - FeignClient provides define web service client interface with a name and a URL to call service
+			  - To define just create an interface and annote with @FeignClient(name="", url="") and a methods to call services
+			  - Now instead of using resttemplate we will use this interface.methods
+			  - @EnableFiegnClients has to be used for SpringBootApplication
+			  - By default Round Robbin load balancing will be provided
+- Eureka Server - Maintains a registry of eureka clients
+- Eureka Client - Its a client exists at each microservice and its replicas also
+- To communicate from one micro service to other we have to call the other service running in another machine using its IP address
+- So in this case when a microservice is down and Up in another machine we cant access it using its IP
+- To address this issue all the microservices registered in a eureka registry running on port 8761
+- And all clients access microservice using the name defined in spring.application.name //eureka.client.serviceUrl.defaultZone=http://localhost:8761/eureka/
+//spring.application.name=producer-service
+- When one replica of microservice is down - that microservice will be removed from eureka registry at eureka server
+- Health checks are performed in order to identify and evict down/non-reachable microservices from the Eureka server registry. However, the Eureka server never sends keep-alive requests to its registered clients in order to learn whether they are active or not (as opposed to some Traffic Managers). Instead, Eureka clients send heartbeats to the Eureka server in order to educate the server on their status.
+The Eureka server exposes the following resource to which the clients send heartbeats.
+
+PUT /eureka/apps/{app id}/{instance id}?status={status} 
+-Upon receiving a heartbeat request, the Eureka server renews the lease of that instance. If it's the very first heartbeat, the Eureka server responds with a 404 and right after that the client sends a registration request.
+
+Eureka server exposes the following operations to allow the overriding and undo-overriding of health statuses:
+
+PUT /eureka/apps/{app id}/{instance id}/status?value={status}
+
+DELETE /eureka/apps/{app id}/{instance id}/status
+
+The overriding operation (i.e. the PUT operation above) is used to take an otherwise healthy instance OUT_OF_SERVICE manually or by using administration tools such as Asgard (to temporarily disallow traffic to some instance).
+
+The Eureka client (or server) never invokes the /health endpoint to determine the instance's health status. The health status of a Eureka instance is determined by a HealthCheckHandler implementation. The default HealthCheckHandler always announces that the application is in an UP state as long as the application is running.
+
+-------------------------
+
+Spring Cloud Config server and client
+- Used for externalization of application properties
+- Used to read the properties from external location like github reporsitory or from an external file
+- Spring cloud client library will be added at every micro service and is enabled through @EnableCloudClient
+- And at spring cloud client springboot application - bootstrap.properties/.yml file will be added 
+	- and provide a spring cloud config server url spring.cloud.config.uri = http://localhost:8888
+	- Bootstrap context is parent context of spring application context. Boot strap properties will be read before application is up
+- At Spring cloud config server give the url of github repository from where properties has to be read
+	- spring.cloud.config.server.git.uri=file://D://Personal//Studies//Spring boot and Microservices//config-repo
+	- port - server.port:8888
+	- It exposes an endpoints - http://localhost:8888/<application-name>/<profile>/<label>
+	- application-name is the nae given at config client bootstrap properties
+	- profile is like dev/test/prod given in config client bootstrap properties - if not given default <applicationname>.properties
+	- label is the tag of github repostiroy like master/branch etc
+- Generally properties will be stored in repo like this
+	-application.properties - default for all apps
+	- <applicationname>.properties - default for <applicationname> for all profiles
+	- <applicationname_profile>.properties - for application name and profile
+@RefreshScope -
+Its the annotation given to component bean or rest controller 
+It enables bean to refresh bean on actuator/refresh
+It is generally given to a bean which is a property place holder like @value{<propertyname>}
+So when a properties are changed in github repo this bean is refreshed to get new properties from repo using actuato/refresh
+
+-Spring Cloud Bus
+	- Spring Cloud Bus links nodes of a distributed system with a lightweight message broker. This can then be used to broadcast state changes (e.g. configuration changes) or other management instructions
+	-RabbitMQServer
+		- Whenever proeprties are changed in repo it is difficult to refreh each service by using actuator/refresh
+		- Instead, each service will be registerd in RabbitMQServer and when we give refresh event to RabbitMQServer it will raise refresh event to all the registered micorservices
+		-As long as Spring Cloud Bus AMQP and RabbitMQ are on the classpath any Spring Boot application will try to contact a RabbitMQ server on localhost:5672 (the default value of spring.rabbitmq.addresses):
+-Docker	- open source containerized application
+	- contianer is to isolate one application over another application 
+	- To run VM we need a guest OS in every VM and a Hypervisor to manage VMs
+	- VM occupies more memory
+- Caranary Deployment
+	- Canary deployments are a pattern for rolling out releases to a subset of users or servers. The idea is to first deploy the change to a small subset of servers, test it, and then roll the change out to the rest of the servers.
+- Service Mesh 
+		- Each service have a proxy called side car. It manages the communication between services. Anything that can be isolated from microservices can be keep at side cars
+		- It uses to manage east-west traffic service to service communication
+		- Where are API gateways for north-south traffic (client to service) communication
+- API Gateways -
+	- Common things implemented at each microservice can be separated and implemented at API Gateway and make it as a entry pointers
+	- Authentication
+	- Authorization
+	- SSL
+	- DDOS/throttling - Denial of service attack - a denial-of-service attack is a cyber-attack in which the perpetrator seeks to make a machine or network resource unavailable to its intended users by temporarily or indefinitely disrupting services of a host connected to the Internet.
+	- static content
+	- cache
+	- Router & Load Balancing
+
+Kubernetees
+
+Pod -> A single unit of deployment
+To deplooy a application in kubernetees cluster we minimum need one pod
+Where pods are located
+	-> we generally deploy pods on worker node
+	-> every pod running on node contians IP address
+	-> one main container + helper containers
+	-> One POD communicate with another POD using its IP
+	-> All the containers running on a POD ust have unique IP
+	-> Contianers with in the same POD can communicate with same IP
+	-> To deploy a POD we can create by describing a commands in yml file
+		-> apiVersion - Which version of kubernetes API you are using
+		-> kind - Whta kind og object you want to create (Pod/service..)
+		-> metdata - Data helps uniquely identifying the object
+		-> spec - desired state of object
+
+How to access tomcat of any pod
+http://any-node-external-ip:nodeport
+
+
+-> nodeip:port --> node port in a worker node -> it will forward to podip:port and then a service running in a container
+
+connecting to pod container service using service ip port/cluster ip port/loadbalancer
+
+Service stands before pods
+
+Replication Controller ensures that a specified number of pod replicas running at one time.
+Replication Set follows setbased 
+Replication Controller follows equity based 

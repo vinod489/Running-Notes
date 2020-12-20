@@ -1,0 +1,516 @@
+React is a javascript library not a framework for building reusable components developed by facebook
+React focuses on UI building
+React js-we create independent components and bundled them
+Component based architecture
+Reusable ciode
+Can break the application into multiple components and bundle them together
+React is declaritive - tell wat the UI looks like - React will build UI
+Integrate into any application
+it has atleast one component that is App
+
+main file is index.js and it has div with id root
+entire UI of the page will be rendered inside root element only
+
+A component is a javascript class with state and render
+React keeps a lighweight representation of DOM tree in memory it like a virtual DOM
+when we change the state of element a react element will be compared and update in read DOM
+When we change the state of element it will simply update the DOM. in plain javascript we have to get real DOM and update there
+
+
+npm i -g create-react-app@1.5.2
+
+create-react-app <appname> -> going to install all react libraries, Development server, Babel for compiling js code, webpack for bundling
+
+Component
+	-> Component is a part of UI
+	-> one component can be a part of another component -> nested components
+	-> A component is a js file
+	-> Stateless functional component
+		-> Java script functions -> returns UI of html tags
+	-> Stateful Class Component
+		-> extneds a component class
+		-> must contain render method -> which returns HTML
+	-> class App extends Component
+	-> components are reusable
+
+	-> Functional Component
+		-> js function
+		-> accepts properties and returns HTML UI
+		-> always functional component is preferred
+		-> no this keyword
+		-> solution without state
+		-> Mainly responsible for UI
+		-> stateless/dumb/Presentational
+	-> Class Component
+		-> maintains private information for that component
+		-> optionally it will also receive a properties
+		-> has render method which returns HTML tags
+		-> maintain their own private data - state
+		-> Complex UI Logic
+		-> provide lifecycle hooks
+		-> stateful/smart/container components
+	-> Hooks
+		-> Hooks are a new feature proposal that lets you use state and other reat features witout writing a class
+		-> so functional components are not any more stateless
+	-> jsx
+		-> javascript xml (jsx) -> extension to javascript language syntax
+		-> its extension to react library to write code for elements and components
+		-> have tagname, children and attributes
+		-> jsx makes code simple and elegant
+		-> jsx ultimately transpiles to javascript when browser uses it
+		-> jsx internally uses React 
+		Ex:- 
+		jsx:-
+		return (
+		   <div className='hello'>
+			 <h1>Hello Vinod</h1>
+		   </div>
+		 );
+		
+		React:
+		return React.createElement(
+			"div",
+			{ id: "hello", className: "hello" },
+			React.createElement("h1", null, "Hi Vinod")
+		  );
+	-> Properties
+		-> props is a shortcut
+		-> specify as atrributes
+		-> props.attributename in functional component
+		-> this.props.attributename in class component
+		-> props are immutable. we cant change
+	-> Component State
+		-> Props vs State
+		-> props get passed to component
+		-> Functional parameters
+		-> props are immutable
+		-> State is managed with in component
+		-> variables declared in function body
+		-> state can be changed
+	-> PROPS VS State
+		-> props will be passed to component
+		-> state will be inside component
+		-> props are immutable where as state are not
+		-> props can be accessed props and this.props where as state as this.state
+		-> both props and state influence the UI
+		-> state can infuence what is to be displayed in UI
+		-> state can be changed with in the component
+	-> setState
+		-> if state is directly updated using this.state in action handlers it wont update UI directly
+		-> always state should be updated using setState
+		-> calls to setState are asynchronous
+		-> this.setState(<state object>, <call back function>)
+		-> always write the code to be executed after state is changed in callback function
+		-> react group multiple setState calls into single setState call for better performance
+		-> when we update state of component based on prev state always pass function as object to setState. function have access to prevState
+			Ex:- this.setState((prevState) => ({
+				  count: prevState.count + 1,
+				}));
+		-> second parameter to setState is props
+			this.setState((prevState,props) => ({}));
+	-> Desctructuring props and state
+		->
+		Ex:- without destructuring
+		const Greet = (props) => {
+		  console.log(props);
+		  return (
+			<div>
+			  <h1>
+				Hello {props.name} a.k.a {props.heroname}
+			  </h1>
+			  {props.children}
+			</div>
+		  );
+		};
+		with destructuring
+		const Greet = ({name, heroname}) => {
+		  console.log(props);
+		  return (
+			<div>
+			  <h1>
+				Hello {name} a.k.a {heroname}
+			  </h1>
+			  {props.children}
+			</div>
+		  );
+		};
+	-> Events 
+		functional Events
+		onClick={clickHandlerFunction} -- correct
+		onClick={clickHandlerFunction()} -- wrong--function will be called already not on click. so () should not be given. Its a function call
+		class Component Events
+		onClick={this.clickHandlerFunction} -- correct
+		
+	-> Bind Events
+		-> this keyword is undefined in event handlers
+		-> we have to bind this with a bind keyword to event handler like this.clickHandler.bind(this);
+		-> every change in state, component will be rerebderd and a event handler rebinding-- its a performance issue
+		-> 2. another approach is use arrow function onClick={() => this.clickHandler()}
+		-> 3. another approach is binding the this to event handler in cosntructor - binding in class constructor wich will be called once
+		-> 4. another approach is use arrow function in class for event handler
+	-> this
+		It has different values depending on where it is used:
+			In a method, this refers to the owner object.
+			Alone, this refers to the global object.
+			In a function, this refers to the global object.
+			In a function, in strict mode, this is undefined.
+			In an event, this refers to the element that received the event.
+			Methods like call(), and apply() can refer this to any object.
+	-> Methods as Props
+		-> alert(`Hello ${this.state.parentName}`);//feature in ES6 - Template literal
+		-> How child component communicate to parent component
+			-> pass parent method reference as a props to child component
+			-> <ChildComponent greetHandler={this.greetParent} /> here greetParent is a method defined in parent component
+			-> In child - <button onClick={() => props.greetHandler("Child")}>Greet Parent</button>
+	-> Conditional Rendering
+		-> if else, ternary operator and short curcuit operator
+	-> list rendering
+		-> use javascript map to iterate list and render
+		-> Ex:-
+				  //   return (
+				  //     <div>
+				  //       {names.map((name) => (
+				  //         <h2>{name}</h2>
+				  //       ))}
+				  //     </div>
+				  //   )
+	-> Lists and Keys
+		-> Each child in a list should have a unique "key" prop.
+		-> Ex:-
+			const personsList = persons.map((person) => (
+				<Person key={person.id} person={person}></Person>
+			  ));
+		-> key is not a prop, cant be accessed in a child component
+		-> keys help react to identify which element has changed/added/removed - plays a crucial role in updating UI
+		-> W/o key
+			-> <ul>
+				<li>Bruce</li>
+				<li>Clark</li>
+			   </ul>
+			-> <ul>
+				<li>Bruce</li>
+				<li>Clark</li>
+				<li>Diana</li>
+			   </ul>
+			When two lists are compared react can identify the last one is newly added and update the DOM tree accordingly
+			Suppose
+			-> <ul>
+				<li>Bruce</li>
+				<li>Clark</li>
+			   </ul>
+			-> <ul>
+				<li>Diana</li>
+				<li>Bruce</li>
+				<li>Clark</li>				
+			   </ul>
+			 If two lists are like this, comparsion makes all the components changed and all the components will be added to list again
+			 
+		-> With key
+			-> <ul>
+				<li key="1">Bruce</li>
+				<li key="2">Clark</li>
+			   </ul>
+			-> <ul>
+				<li key="3">Diana</li>
+				<li key="1">Bruce</li>
+				<li key="2">Clark</li>				
+			   </ul>
+			With key comparsion this list now can be updated properly
+			-> helps in updating UI efficiently
+	-> Index as key  anti-pattern
+		-> index as a second parameter for map function
+		->	Existing
+			<li key="0">1</li>
+			<li key="1">2</li>
+			<li key="2">3</li>				
+			
+			Adding new item at top
+			
+			<li key="0"></li>
+			<li key="1"></li>
+			<li key="2"></li>
+			<li key="3"></li>
+			
+			result - issue here.. -- react updates the values from the top
+			instead of adding empty item at top , it added at down
+			<li key="0">1</li>
+			<li key="1">2</li>
+			<li key="2">3</li>
+			<li key="3"></li>
+			
+			Even while sorting with index as key -- when data is sorted, index wont sort...it always arranges as per data
+			
+			When to use index as key
+				-> items in list do not have unique key
+				-> list is a static list
+				-> list will never be reordered or filtered
+				-> react uses index as key when it is not specified
+	-> Styling and CSS basics
+		-> CSS stylesheets
+		-> Inline Styling
+		-> CSS Modules
+		-> CSS in JS libraries (styled components)
+		
+		-> CSS stylesheets Ex:- <h1 className={`${className} font-xl`}>Style Sheets</h1>
+		-> Inline styling 
+			Ex:- 
+			const heading = {
+			  fontSize: "72px",
+			  color: "Blue",
+			};
+			<h1 style={heading}>Inline</h1>
+		-> CSS Modules
+			-> file name must be suffix with .module.css
+			-> advantage is that classess are locally scoped by default
+	-> Basics of form handling
+		-> <input name="username" value={this.state.} onChange={this.onChanngeHandler}/>
+		onChangeHandler = (event) => {
+			this.state.username = event.target.value;
+		}
+	-> Component lifecycle methods
+		-> mounting - called when an instance of component is created and inserted in DOM
+			-> constructor, static getDerivedStateFormProps, render and componentDidMount
+		-> updating - when component is being re-rendered  as a results of changes in state or provide
+			-> static getDerivedStateFormProps, shouldComponentUpdate, render, getSnapshotBeforeUpdate and componentDidUpdate
+		-> unmounting - when component is removed from DOM
+			-> componentWillUnMount
+		-> Error Handling - when there is an error during rendering, in lifecycle method, or in any constructor of child component
+			-> static getDerivedStateFromError, componentDidCatch
+	-> Mounting LifeCylce Methods
+		-> 1. constructor(props) -> called whenever component instance is called, used to set initial state and bind event handler
+							  -> never do HTTP request 
+							  -> call super(props) 
+							  -> overwrite this.state -> only this place we direclty use this.state
+		-> 2. static getDerivedStateFormProps(props, state) -> rarely used
+															-> used - component depends on props 
+															-> cannot call this.state in this as this function is a static, this is not available
+															-> return a new state object
+															-> dont make HTTP
+		-> 3. render() -> only required methods
+					   -> reads this.props and this.state and returns jsx
+					   -> do not change state, interact with DOM, make ajax calls
+					   -> children lifecycle methods also executed
+		-> 4. componentDidMount() -> called only once and called immediately after all child lifecycle methods called
+								  ->  side effects - interact with DOM or perform any ajax calls to load data
+	-> Updating LifeCylce Methods
+		-> 1. static getDerivedStateFormProps(props,state) -> returns null or a new state object -> used when state depends on props -> called on every rendering
+		-> 2. shouldComponentUpdate(nextProps, nextState) -> dicitates whether component rerender or not 
+														  -> By default component rerender when state is changed
+														  -> to prevent default behaviour return false
+														  -> can compare current props, state with next props and next state and return true or false
+														  -> dont call HTTP and calling setState
+		-> 3. render() -> only required methods
+					  -> reads this.props and this.state and returns jsx
+					  -> do not interact with DOM, make ajax calls, do not change state
+		-> 4. getSnapshotBeforeUpdate(prevProps, prevState) -> called after render
+															-> called right before changes from virtual DOM are to be reflected into real DOM
+															-> capture some information from DOM
+															-> Method will return null or return value. reutned value will be passed as a parameter to next method
+															-> want to know scrolbar position before update in UI and use this scrollbar position in next life cycle methos to set the scrollbar position to back
+		-> 5. componentDidUpdate(prevProps, prevState, snapshot)-> called after getSnapshotBeforeUpdate is finshed 
+																-> caused only once in updating cycle
+																-> causes side effects -> to make ajax calls compare prev and current state/props then make ajax calls 
+	-> Unmounting LifeCylce Methods
+		-> componentWillUnMount() -> Method is invoker immediately before a component is unmounted or destroyed
+								  -> cancelling any network request, removing eventhandlers, cancelling subcriptions and invalidate timeslike settimeout or setinterval
+								  -> do not call setState->because there isno rerendering
+								  
+	-> Error Handling LifeCylce Methods
+		-> static getDerivedStateFromError(erro)
+		-> componentDidCatch(error,info)
+		-> called when there is an error while rendering , in a life cycle method or constructor of any child component
+	
+	-> Fragments	
+		-> Let you group a list of childerns without adding extra node to DOM
+		-> when adding more than one tag inside render..that should be wrapped inside div
+		-> this creates one more tag
+		-> to avoid this we can place these multiple tags/child components inside <React.Fragment></React.Fragment>
+		-> React.Fragement only accepts key attribute
+		-> short hand syntax <> </> - cannot pass key attribute
+	-> Pure Components
+		-> PureComponent class
+		-> extends PureComponent
+		-> Regular Component doesnot implement shouldComponentUpdate method. It always return true
+		-> Pure Component implemented shouldComponentUpdate method with shallow props and state comparison
+			-> Shallow Comparison
+				-> for primitive values a,b compares a=b or not
+				-> for complex types
+					-> a=[1,2,3]
+					 b= [1,2,3]
+					 c=a;
+					 a shallow comaprison b == false//comparisons reference
+					 a shallow comparison c == true
+					 
+					 -> a={x:1, y:2}
+					 b= {x:1, y:2}
+					 c=a;
+					 a shallow comaprison b == false//comparisons reference
+					 a shallow comparison c == true
+		-> shallow compare prev state with current state and returns true only if there is a change
+		-> shallow compare prev props with current props and returns true only if there is a change
+		-> prevents unnecessary renders and gives performance boost
+		-> Always return new object instead of pushing or adding the item to object/array when working with PureComponent
+		-> works only with class based components
+	-> memo
+		-> memo is functional based components where it re-renders only when shallow comparison of props is changed
+		-> export default React.memo(MemoComp);
+	-> Refs
+		-> to acess DOM nodes directly in react
+		-> React.createRef() - create reference in constructor and use throughout component
+		-> <input type="text" ref={this.inputRef} /> -> adds reference to input text
+		-> with callback ref we first create propery and assign the element to property in callback function
+		-> Ex:-
+		constructor(props) {
+			super(props);
+			this.inputRef = React.createRef();
+			this.cbRef = null;
+			this.setCbRef = (element) => {
+			  this.cbRef = element;
+			};
+		}
+		<input type="text" ref={this.setCbRef} />
+		-> we can give ref={} to a class component Ex:- <Input ref={this.componentRef} />
+		-> cannot be given to functional component
+	-> Forwarding Refs
+		-> Automatically passing refs to one of the children
+		-> parent component creates ref and attaches to child component ref
+			<FrInput ref={this.inputRef} />
+		-> Child function component forwards that reference to actual element
+			const FrInput = React.forwardRef((props, ref) => {
+			  return (
+				<div>
+				  <input type="text" ref={ref} />
+				</div>
+			  );
+			});
+			forwards ref to input element
+	-> Portals
+		-> Provide a way to render children into DOM node that exists outside of root element
+		-> Ex:-
+		return ReactDOM.createPortal(
+			<div>
+			  <h1>Portal Demo</h1>
+			</div>,
+			document.getElementById("portal-root");//rendering outside root node
+		  );
+		-> use in case of creating popups/dialog outside root
+		-> event bubbling -> event fired from portal will propogate to parent component and it will work like just a react component
+	-> Error Boundary
+		-> If error is not handled inside component it will be unmounted when error occurs
+		-> A class component that implements either one or both of the licecycle methods getDerivedStateFromError and componentDidCatch becomes an error boundry
+		-> static getDerivedStateFromError is used to render a fallback UI when error is thrown and componentDidCatch is used to log the error
+		-> wont catch errors in event handlers
+		-> catch errors during rendering and in lifecycle methods
+		-> <ErrorBoundry></component1></component2></ErrorBoundry>
+	-> Higher Order Components - HOC
+		-> common functionality to share among components
+		-> A pattern where a function takes a component as argument and returns new argument
+		-> const newComponent = higherOrderComponent(originalComponent);
+		-> HOC is a function which accepts original component adds an additional functionality to original component and returns enhanced component
+		-> 
+	-> Render props
+		-> Another pattern to share code with components
+		-> term render prop refers to a technique for sharing code between react components using a prop whose value is a function
+		-> Ex:= <User render={(isLoggedIn) => (isLoggedIn ? "Vinod" : "Guest")} />
+				-> class User extends Component {
+					  render() {
+						return <div>{this.props.render(false)}</div>;
+					  }
+					}
+		-> Ex:-
+			<CounterTwo
+				render={(count, incrementCount) => (
+				  <ClickCounterTwo count={count} incrementCount={incrementCount} />
+				)}
+			  ></CounterTwo>
+			  <CounterTwo
+				render={(count, incrementCount) => (
+				  <HoverCounterTwo count={count} incrementCount={incrementCount} />
+				)}
+			  ></CounterTwo>
+			  
+			 CounterTwo ---
+			  render() {
+				return (
+				  <div>{this.props.render(this.state.count, this.incrementCount)}</div>
+				);
+			  }
+			  
+			class ClickCounterTwo extends Component {
+			  render() {
+				const { count, incrementCount } = this.props;
+				return (
+				  <div>
+					<button onClick={incrementCount}>Clicked {count} Times</button>
+				  </div>
+				);
+			  }
+			}
+			
+			class HoverCounterTwo extends Component {
+			  render() {
+				const { count, incrementCount } = this.props;
+				return (
+				  <div>
+					<h2 onMouseOver={incrementCount}>Hovered {count} times</h2>
+				  </div>
+				);
+			  }
+			}
+			
+		-> can be passed as children props also
+			Ex:-
+				<CounterTwo>
+				{(count, incrementCount) => (
+				  <ClickCounterTwo count={count} incrementCount={incrementCount} />
+				)}
+			  </CounterTwo>
+			 
+			 render() {
+				return (
+				  <div>{this.props.children(this.state.count, this.incrementCount)}</div>
+				);
+			  }
+	-> Context
+		-> To pass the App component property to last level children it has to be passed through all levels of components
+		-> Contexts - To pass data through the component tree without having to pass the props down throguh all levels
+		-> 3 steps
+			-> 1. Create Context - const UserContext = React.createContext(); Export provider and cosumer created from user Context
+			-> 2. Provide a User Provider -> Include a User provider in toplevel component -> <UserProvider name="Vinod"><Parent Component></UserProvider>
+			-> 3. Provide a User Consumer -> Use User Consumer and provide a function as a child with a parameter to accept prop passed in paretn component
+				Ex:- <UserConsumer>
+					  {(username) => {
+						return <div>Hello {username}</div>;
+					  }}
+					</UserConsumer>		
+		-> Can set a default value to context -> passed as an argument to creatContext -> React.createContext('Vinod Kumar');
+			-> default value will be passed to component when a matching user provider is not provided
+		-> ContextType property
+			-> We can get context type by exporting user context and use it in component
+			-> ComponentB.contextType = UserContext; or static contextType = UserContext, and use this as {this.context}
+			
+	-> React and HTTP
+		-> How HTTP requests are handled in React
+		-> How to make API calls or ajax calls
+			-> Ajax calls will be made in componetDidMount() method which will be called only once while rendering
+	-> React Hooks
+		-> Allows to use React features without haveing to write a class
+			-> can use state and props without classess
+			-> Hooks dont work inside classes
+				-> Usage of this keyword in class is complex
+				-> Complex logic of Higher Order Components HOC 
+				-> Data fetching in componentDidMount and componentDidUpdate -> related code is not organized into one place
+				-> Event Listeners binding in componentDidMount and unbinding in componentWillUnMount
+			-> Hooks is from React 16.8 version
+	-> React Redux
+		-> Redux is a 1. predicatble 2.state container for 3. javascript apps
+			-> can be used with any javascript library..its not for only react
+			-> Stores the state of application
+			-> Predict the state change
+				-> all state transitions are explicit and it is possible to track them
+				-> predic the application chage
+			-> Manage the state of application in a predicatble way
+			
+			-> With redux state is managed in outside container not with in the component
+			-> To pass the state from parent to lowest level --> It has to passed through all levels without redux
+			-> React-Redux is a official Redux UI binding library for react

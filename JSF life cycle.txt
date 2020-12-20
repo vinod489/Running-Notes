@@ -1,0 +1,53 @@
+Whenever server is started - Container deploy all the applications under webapps folder
+- Container creates a separate servlet context object for each application
+- Container performs web.xml loading,parsing and content reading
+- If container identifies any application data like welcome files,display names it will store that information in servlet context object
+- If any load on start up servlet is identified container performs loading,instaintaion and initializing
+- faces servlet contains the load on start up servlet tag javax.faces.webapp.FacesServlet
+- Conatiner checks for its .class file under classes folder
+- .class is not avialble because it is from jsf library
+- Container understands that .class file is not available and looks in jar files under lib folder
+- jsf-api.jar file contains faces servlet class 
+- Container perfoms loading, instantiation and intialization of faces servlet
+- Calls the initi method of faces servlet
+- Faces servlet identifies faces-config.xml file and loads,parses the file
+- Faces servlet creates life cycle object
+- Life cycle object contains multiple phases
+- 1. Restore View, 2. Apply request values, 3. Process Validators, 4. Update Model, 5. Invoke application, 6. Render response
+
+
+After server is started
+- Client sends request to server
+- Web container takes the request and identifies the url pattern in web.xml and identifes the servlet to invoke
+- Triggers the Faces servlet service() method
+In case of JSF, it raises event to servlet not a form submission
+- Faces servlet creates a FacesContext object and starts executing the phases of life cycle
+1. Restore View - It checks whether the request coming for any resource or action
+If it is for resource Restore view bypass all phases and directly calls Render response
+Returns the resource to server
+If request is coming for action 
+Restore view will check if any compoenent tree is existed for the request
+if exits reterive the component tree or else it will create a new component tree
+Component tree will be create based on the f: tags
+Root node -> UI View Root
+-> HTML Form 
+-> HTML Panel Grid
+-> HTML components will be created for all the components in jsf page
+-> If any converters and validators exists for HTML componens those will be registered
+-> Default values from the bean will be set to HTML components in component tree
+-> Finally this component tree will be stored in HTTP Session and Faces context object
+Apply request values
+Applies the values entered in jsf page to the components in Component tree
+Getting the data from request object and setting it to components a separate method will be exceuted in life cycle object - processDecode()
+Process Validators
+This phase validates if any validators available for compoenents and also check for converters
+if any validation/conversion message is there it will store in Faces context object
+If any error occurs it will bypass next phases and render response by taking the validation message from daces context object - processValidators()
+Update Model
+It sets the values to managed bean object which were copied from component tree - processUpdates()
+Invoke application
+It executes the action method in managed bean object - processApplication()
+It forward the response from action listener method to render rensponse phase
+If no message is returned from action method it will forward the request to same page
+Render response
+It renders the response like html,xml,pdf ... - encodeXXX()

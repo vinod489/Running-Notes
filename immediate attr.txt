@@ -1,0 +1,22 @@
+If any component wants to be processed before all components immediate should be set to true
+If you want to get value of any other component on this component action for which immediate is not to set to true then the value is in string representation and is not converted 
+To shortcircuit the JSF life cycle
+FacesContext.getCurrent().renderResponse() to render the failed validation of immediate true component
+Immediately invokes action and call renders response
+No updated model data is available for other components to this time
+To access user provided input - call getSubmittedValue()
+After apply request phase continue to render response phase
+Restore view-> Apply request values->Render response
+Eg:- Reset form with out validating..
+Side effects
+- UI components do not re-evaluate their value binding. Showing stale data
+3 options
+- af:resetActionListener
+- Resetutils.reset()
+-UIComponent.resetValue()
+- Clears the submitted value
+- Clears local Componetn value so value binding is re-evaluated
+-Marks component as valid
+
+getSubmittedValue() is in RAW format - needs conversion
+getSubmittedValue() is in RAW format - needs conversion

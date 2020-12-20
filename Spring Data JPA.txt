@@ -1,0 +1,703 @@
+CRUD application
+	-> Spring data JPA
+	-> spring web starter
+	-> mysql driver
+	-> dev tools
+	
+Sprin data JPA -> DAO layer
+	-> DAO needs Hibernate Session Factory
+	-> Hibernate Session Factory needs data source
+	-> datasource defines connection info
+	-> In tradational spring we have to mention all these things manually
+	-> Spring boot automatically configure data source based on maven dependencies and application.properties
+		-> we can give proeprties for connection pool
+	-> Base on configuration springboot automatically create beans for 
+		-> DataSource, Entity Manager
+	-> can inject them into DAO
+	-> Entity Manager is from Java Persistent API (JPA)
+
+What is JPA
+	-> Its a standard framework for Object relational mapping (ORM)
+	-> its defines a set of interfaces
+		-> requires an implementation to use
+	-> Implementation -> Hibernate, EclipseLink
+	-> benefits of JPA
+		-> By coding to JPA no need to depend on one vendor, no vendor lockin, can easily switch to other vendor implementation
+
+Auto datasource configuration
+	-> In springboot hiberante is the default implementation of JPA
+	-> Entity Manager in JPA is similar to Session Factory in Hibernate
+	-> Entity Manager can server as a wrapper for session object
+	-> inject Entity Manager into DAO
+
+***************************************************************************************************************************************************************	
+Entity Manager
+
+1. Introduction
+
+EntityManager is a part of the Java Persistence API. Chiefly, it implements the programming interfaces and lifecycle rules defined by the JPA 2.0 specification.
+
+Moreover, we can access the Persistence Context, by using the APIs in EntityManager.
+
+In this tutorial, we'll take a look at the configuration, types, and various APIs of the EntityManager.
+2. Maven Dependencies
+
+First, we need to include the dependencies of Hibernate:
+
+<dependency>
+    <groupId>org.hibernate</groupId>
+    <artifactId>hibernate-core</artifactId>
+    <version>5.4.0.Final</version>
+</dependency>
+
+We will also have to include the driver dependencies, depending upon the database that we're using:
+
+<dependency>
+    <groupId>mysql</groupId>
+    <artifactId>mysql-connector-java</artifactId>
+    <version>8.0.13</version>
+</dependency>
+
+The hibernate-core and mysql-connector-java dependencies are available on Maven Central.
+3. Configuration
+
+Now, let's demonstrate the EntityManager, by using a Movie entity that corresponds to a MOVIE table in the database.
+
+Over the course of this article, we'll make use of the EntityManager API to work with the Movie objects in the database.
+3.1. Defining the Entity
+
+Let's start by creating the entity corresponding to the MOVIE table, using the @Entity annotation:
+
+@Entity
+@Table(name = "MOVIE")
+public class Movie {
+    
+    @Id
+    private Long id;
+
+    private String movieName;
+
+    private Integer releaseYear;
+
+    private String language;
+
+    // standard constructor, getters, setters
+}
+
+3.2. The persistence.xml File
+
+When the EntityManagerFactory is created, the persistence implementation searches for the META-INF/persistence.xml file in the classpath.
+
+This file contains the configuration for the EntityManager:
+
+<persistence-unit name="com.baeldung.movie_catalog">
+    <description>Hibernate EntityManager Demo</description>
+    <class>com.baeldung.hibernate.pojo.Movie</class> 
+    <exclude-unlisted-classes>true</exclude-unlisted-classes>
+    <properties>
+        <property name="hibernate.dialect" value="org.hibernate.dialect.MySQL5Dialect"/>
+        <property name="hibernate.hbm2ddl.auto" value="update"/>
+        <property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver"/>
+        <property name="javax.persistence.jdbc.url" value="jdbc:mysql://127.0.0.1:3306/moviecatalog"/>
+        <property name="javax.persistence.jdbc.user" value="root"/>
+        <property name="javax.persistence.jdbc.password" value="root"/>
+    </properties>
+</persistence-unit>
+
+To explain, we define the persistence-unit that specifies the underlying datastore managed by the EntityManager.
+
+Furthermore, we define the dialect and the other JDBC properties of the underlying datastore. Hibernate is database-agnostic. Based on these properties, Hibernate connects with the underlying database.
+4. Container and Application Managed EntityManager
+
+Basically, there are two types of EntityManager: Container-Managed and Application-Managed.
+
+Let's have a closer look at each type.
+4.1. Container-Managed EntityManager
+
+Here, the container injects the EntityManager in our enterprise components.
+
+In other words, the container creates the EntityManager from the EntityManagerFactory for us:
+
+@PersistenceContext
+EntityManager entityManager;
+
+This also means the container is in charge of beginning the transaction, as well as committing or rolling it back.
+
+Similarly, the container is responsible for closing the EntityManager, so it's safe to use without manual cleanups. Even if we try to close a container-managed EntityManager, it should throw an IllegalStateException.
+4.2. Application-Managed EntityManager
+
+Conversely, the lifecycle of the EntityManager is managed by the application here.
+
+In fact, we'll manually create the EntityManager. Furthermore, we'll also manage the lifecycle of the EntityManager we've created.
+
+First, let's create the EntityManagerFactory:
+
+EntityManagerFactory emf = Persistence.createEntityManagerFactory("com.baeldung.movie_catalog");
+
+In order to create an EntityManager, we must explicitly call createEntityManager() in the EntityManagerFactory:
+
+public static EntityManager getEntityManager() {
+    return emf.createEntityManager();
+}
+
+Since we are responsible for creating EntityManager instances, it's also our responsibility to close them. Therefore, we should close each EntityManager when we're done using them.
+4.3. Thread-Safety
+
+The EntityManagerFactory instances and, consequently, Hibernate's SessionFactory instances, are thread-safe. So it's completely safe in concurrent contexts to write:
+
+EntityManagerFactory emf = // fetched from somewhere
+EntityManager em = emf.createEntityManager();
+
+On the other hand, the EntityManager instances are not thread-safe and are meant to be used in thread-confined environments. This means that each thread should obtain its instance, work with it, and close it at the end.
+
+When using application-managed EntityManagers, it's easy to create thread-confined instances:
+
+EntityManagerFactory emf = // fetched from somewhere 
+EntityManager em = emf.createEntityManager();
+// use it in the current thread
+
+However, things get counter-intuitive when using container-managed EntityManagers. For example:
+
+@Service
+public class MovieService {
+
+    @PersistenceContext // or even @Autowired
+    private EntityManager entityManager;
+    
+    // omitted
+}
+
+It seems that one EntityManager instance should be shared for all operations. However, the container (JakartaEE or Spring) injects a special proxy instead of a simple EntityManager here. Spring, for example, injects a proxy of type SharedEntityManagerCreator. 
+
+Every time we use the injected EntityManager, this proxy will either reuse the existing EntityManager or create a new one. Reuse usually occurs when we enable something like Open Session/EntityManager in View. 
+
+Either way, the container ensures that each EntityManager is confined to one thread.
+5. Hibernate Entity Operations
+
+The EntityManager API provides a collection of methods. We can interact with the database, by making use of these methods.
+5.1. Persisting Entities
+
+In order to have an object associated with the EntityManager, we can make use of the persist() method :
+
+public void saveMovie() {
+    EntityManager em = getEntityManager();
+    
+    em.getTransaction().begin();
+    
+    Movie movie = new Movie();
+    movie.setId(1L);
+    movie.setMovieName("The Godfather");
+    movie.setReleaseYear(1972);
+    movie.setLanguage("English");
+
+    em.persist(movie);
+    em.getTransaction().commit();
+}
+
+Once the object is saved in the database, it is in the persistent state.
+5.2. Loading Entities
+
+For the purpose of retrieving an object from the database, we can use the find() method.
+
+Here, the method searches by the primary key. In fact, the method expects the entity class type and the primary key:
+
+public Movie getMovie(Long movieId) {
+    EntityManager em = getEntityManager();
+    Movie movie = em.find(Movie.class, new Long(movieId));
+    em.detach(movie);
+    return movie;
+}
+
+However, if we just need the reference to the entity, we can use the getReference() method instead. In effect, it returns a proxy to the entity:
+
+Movie movieRef = em.getReference(Movie.class, new Long(movieId));
+
+5.3. Detaching Entities
+
+In the event that we need to detach an entity from the persistence context, we can use the detach() method. We pass the object to be detached as the parameter to the method:
+
+em.detach(movie);
+
+Once the entity is detached from the persistence context, it will be in the detached state.
+5.4. Merging Entities
+
+In practice, many applications require entity modification across multiple transactions. For example, we may want to retrieve an entity in one transaction for rendering to the UI. Then, another transaction will bring in the changes made in the UI.
+
+We can make use of the merge() method, for such situations. The merge method helps to bring in the modifications made to the detached entity, in the managed entity, if any:
+
+public void mergeMovie() {
+    EntityManager em = getEntityManager();
+    Movie movie = getMovie(1L);
+    em.detach(movie);
+    movie.setLanguage("Italian");
+    em.getTransaction().begin();
+    em.merge(movie);
+    em.getTransaction().commit();
+}
+
+5.5. Querying for Entities
+
+Furthermore, we can make use of JPQL to query for entities. We'll invoke getResultList() to execute them.
+
+Of course, we can use the getSingleResult(), if the query returns just a single object:
+
+public List<?> queryForMovies() {
+    EntityManager em = getEntityManager();
+    List<?> movies = em.createQuery("SELECT movie from Movie movie where movie.language = ?1")
+      .setParameter(1, "English")
+      .getResultList();
+    return movies;
+}
+
+5.6. Removing Entities
+
+Additionally, we can remove an entity from the database using the remove() method. It's important to note that, the object is not detached, but removed.
+
+Here, the state of the entity changes from persistent to new:
+
+public void removeMovie() {
+    EntityManager em = HibernateOperations.getEntityManager();
+    em.getTransaction().begin();
+    Movie movie = em.find(Movie.class, new Long(1L));
+    em.remove(movie);
+    em.getTransaction().commit();
+}
+
+***************************************************************************************************************************************************************
+
+Version 1 -> Use Entity Manager but leverage native Hibernate API 
+	
+	-> DAO Interface
+	interface EmployeeDAO {
+		public List<Employee> findAll();
+		piblic Employee getEmployee(int id);
+		public void saveEmployee(Employee employee);
+		public void deleteEmployee(int id);
+	}
+
+	-> DAO Implementation
+	class EmployeeDAOImpl implements EmployeeDAO {
+		private EntityManager entityManager; //automatically created by springboot
+		
+		@Autowired //constructor injection
+		public EmployeeDAOImpl(EntityManager entityManager) { //if there is only one constructor spring will do autowiring automatically without @Autowired
+			this.entityManager = entityManager;
+		}
+		
+		@Transactional
+		public List<Employee> findAll() {
+			//get hibernate session from entityManager
+			Session session = entityManager.unwrap(session.class);
+			//create a query
+			Query employeeQuery = session.createQuery("from Employee", employee.class); //use hibernate native API
+			List<Employee> employeesList = employeeQuery.getResultList();
+			return employeesList;
+		}
+		
+		@Transactional
+		public Employee getEmployee(int id) {
+			Session session = entityManager.unwrap(session.class);
+			Employee employee = session.get(Employee.class, id);
+			return employee;
+		}
+		
+		@Transactional
+		public void saveEmployee(Employee employee) {
+			Session session = entityManager.unwrap(session.class);
+			session.saveOrUpdate(employee);//if primary key is empty (0 or null) it will insert
+		}
+		
+		@Transactional
+		public void deleteEmployee(int id) {
+			Session session = entityManager.unwrap(session.class);
+			session.delete(id);
+		}
+	}
+	
+	DB configuration
+	-> spring.datasource.url
+	-> spring.datasource.username
+	-> spring.datasource.password
+	
+	In Employee Entity -> no arg constructor is required by hibernate
+
+Use Entity Manager and standard JPA API
+
+	Hibernate Method   vs   JPA API
+	session.get()			entitymanager.find()
+	session.save()			entitymanager.persist();
+	session.createQuery()	entitymanager.createQuery();
+	session.saveOrUpdate()	entitymanager.merge();
+	session.delete()		entityManager.remove();
+	
+	-> DAO Implementation
+	class EmployeeDAOImpl implements EmployeeDAO {
+		private EntityManager entityManager; //automatically created by springboot
+		
+		@Autowired //constructor injection
+		public EmployeeDAOImpl(EntityManager entityManager) { //if there is only one constructor spring will do autowiring automatically without @Autowired
+			this.entityManager = entityManager;
+		}
+		
+		@Transactional
+		public List<Employee> findAll() {
+			//create a query
+			Query employeeQuery = entityManager.createQuery("from Employee", employee.class); //use hibernate native API
+			List<Employee> employeesList = employeeQuery.getResultList();
+			return employeesList;
+		}
+		
+		@Transactional
+		public Employee getEmployee(int id) {
+			Employee employee = entityManager.find(Employee.class, id);
+			return employee;
+		}
+		
+		@Transactional
+		public void saveEmployee(Employee employee) {
+			entityManager.merge(employee);//if primary key is empty (0 or null) it will insert
+		}
+		
+		@Transactional
+		public void deleteEmployee(int id) {
+			Query theQuery = entityManager.createQuery("delete from Employee where id=:employeeId");
+			theQuery.setParameter("employeeId", id);
+			theQuery.executeUpdate();
+		}
+	}
+
+Use Spring data JPA
+
+	-> Instead of DAO we use spring DATA JPA
+	-> To create DAO -> interface and its implementation we have to create
+	-> Suppose if we want to create another DAOs -> same process has to be repeated -> its like repeating a same code 
+	-> Most of the code in DAO is same-> only difference is Entity and primarykey
+		Employee employee = entityManager.find(Employee.class, id); here Employee entity and Id are different remaining code would be same for all DAOs
+	-> Basic DAO methods findAll(), findById(), save(), deleteById() and other basic methods are same for all DAO
+		-> so we want a something which gives the basic methods for the entities
+	-> Spring Data JPA is the solution
+	-> Create a DAO and plugin entity and primary key -> Spring Data JPA provides all the methods -> reduces boiler plate code
+	-> Spring provides a interface JpaRepository and exposes the methods -> find, findById(), save, deleteById() and others
+	-> we just need to plugin Entity and Primary Key
+	Ex:- 
+	public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
+		//no need to write any code
+	}
+	public interface CustomerRepository extends JpaRepository<Customer, Integer> {
+	}
+	public interface StudentRepository extends JpaRepository<Student, Integer> {
+	}
+	-> No need to provide implementation class
+	-> Use this repository in service class
+	Ex:-
+	public class EmployeeServiceImpl implements EmployeeService {
+		@Autowired
+		private EmployeeRepository employeeRepository;
+		
+		@Override
+		public List<Employee> findAll() {
+			return employeeRepository.findAll();
+		}
+	}
+	
+	-> we can extend and add custom queries with JPQL 
+	-> Query Domain Specific Language (QDSL)
+	-> Defing Custom Methods (low-level coding)
+	
+	-> JpaRepository provides functionality of @Transactional -> No need to keep it for methods
+	
+	
+********************************************************************************8*********************************************
+	
+	Map a Stored Procedure Name Directly
+We can define a stored procedure method using the @Procedure annotation and map the stored procedure name directly.
+
+There are four equivalent ways to do that. For example, we can use the stored procedure name directly as the method name:
+
+@Procedure
+int GET_TOTAL_CARS_BY_MODEL(String model);
+If we want to define a different method name, we can put the stored procedure name as the element of @Procedure annotation:
+
+@Procedure("GET_TOTAL_CARS_BY_MODEL")
+int getTotalCarsByModel(String model);
+We can also use the procedureName attribute to map the stored procedure name:
+
+@Procedure(procedureName = "GET_TOTAL_CARS_BY_MODEL")
+int getTotalCarsByModelProcedureName(String model);
+Similarly, we can use the value attribute to map the stored procedure name:
+
+@Procedure(value = "GET_TOTAL_CARS_BY_MODEL")
+int getTotalCarsByModelValue(String model);
+
+
+**********************************************************************************************************************
+	
+	2.1 Pessimistic Locking
+When we are using Pessimistic Locking in a transaction and access an entity, it will be locked immediately. The transaction releases the lock either by committing or rolling back the transaction.
+
+2.2 Optimistic Locking
+In Optimistic Locking, the transaction doesn't lock the entity immediately. Instead, the transaction commonly saves the entity's state with a version number assigned to it.
+
+When we try to update the entity's state in a different transaction, the transaction compares the saved version number with the existing version number during an update.
+
+At this point, if the version number differs, it means that the entity can't be modified. If there is an active transaction then that transaction will be rolled back and the underlying JPA implementation will throw an OptimisticLockException.
+
+**********************************************************************************************************************************
+
+LIKE Query Methods in repository
+
+For many simple LIKE query scenarios, we can take advantage of a variety of keywords to create query methods in our repositories.
+
+Let's explore them now.
+
+3.1. Containing, Contains, IsContaining and Like
+Let's look at how we can perform the following LIKE query with a query method:
+
+SELECT * FROM movie WHERE title LIKE '%in%';
+First, let's define query methods using Containing, Contains, and IsContaining:
+
+List<Movie> findByTitleContaining(String title);
+List<Movie> findByTitleContains(String title);
+List<Movie> findByTitleIsContaining(String title);
+Let's call our query methods with the partial title in:
+
+List<Movie> results = movieRepository.findByTitleContaining("in");
+assertEquals(3, results.size());
+
+results = movieRepository.findByTitleIsContaining("in");
+assertEquals(3, results.size());
+
+results = movieRepository.findByTitleContains("in");
+assertEquals(3, results.size());
+We can expect each of the three methods to return the same results.
+
+Spring also provides us with a Like keyword, but it behaves slightly differently in that we're required to provide the wildcard character with our search parameter.
+
+Let's define a LIKE query method:
+
+List<Movie> findByTitleLike(String title);
+Now, let's call our findByTitleLike method with the same value we used before but including the wildcard characters:
+results = movieRepository.findByTitleLike("%in%");
+assertEquals(3, results.size());
+
+StartsWith
+Now, let's look at the following query:
+
+SELECT * FROM Movie WHERE Rating LIKE 'PG%';
+Let's use the StartsWith keyword to create a query method:
+
+List<Movie> findByRatingStartsWith(String rating);
+With our method defined, let's call it with the value PG:
+
+List<Movie> results = movieRepository.findByRatingStartsWith("PG");
+assertEquals(6, results.size())
+
+EndsWith
+Spring provides us with the opposite functionality with the EndsWith keyword.
+
+Let's consider this query:
+
+SELECT * FROM Movie WHERE director LIKE '%Burton';
+Now, let's define an EndsWith query method:
+
+List<Movie> findByDirectorEndsWith(String director);
+Once we've defined our method, let's call it with the Burton parameter:
+
+List<Movie> results = movieRepository.findByDirectorEndsWith("Burton");
+assertEquals(1, results.size());
+
+Case Insensitivity
+We often want to find all the records containing a certain string regardless of the case. In SQL, we might accomplish this by forcing the column to all capital or lower case letters and providing the same with values we're querying.
+
+With Spring JPA, we can use the IgnoreCase keyword combined with one of our other keywords:
+
+List<Movie> findByTitleContainingIgnoreCase(String title);
+Now we can call the method with the and expect to get results containing both, lower- and uppercase results:
+
+List<Movie> results = movieRepository.findByTitleContainingIgnoreCase("the");
+assertEquals(2, results.size());
+
+Not
+Sometimes we want to find all the records that don't contain a particular string. We can use the NotContains, NotContaining, and NotLike keywords to do that.
+
+Let's define a query using NotContaining to find movies with ratings that don't contain PG:
+
+List<Movie> findByRatingNotContaining(String rating);
+
+List<Movie> results = movieRepository.findByRatingNotContaining("PG");
+assertEquals(1, results.size());
+To achieve functionality that finds records where the director doesn't start with a particular string, let's use the NotLike keyword to retain control over our wild card placement:
+
+List<Movie> findByDirectorNotLike(String director);
+Finally, let's call the method to find all the movies where the director's name starts with something other than An:
+
+List<Movie> results = movieRepository.findByDirectorNotLike("An%");
+assertEquals(5, results.size());
+We can use NotLike in a similar way to accomplish a Not combined with the EndsWith kind of functionality.
+
+
+Named Parameters
+For comparison purposes, let's create a query that's equivalent to the findByTitleContaining method we defined earlier:
+
+@Query("SELECT m FROM Movie m WHERE m.title LIKE %:title%")
+List<Movie> searchByTitleLike(@Param("title") String title);
+We include our wildcards in the query we supply. The @Param annotation is important here because we're using a named parameter.
+
+Ordered Parameters
+In addition to named parameters, we can use ordered parameters in our queries:
+
+@Query("SELECT m FROM Movie m WHERE m.rating LIKE ?1%")
+List<Movie> searchByRatingStartsWith(String rating);
+**********************************************************************************************************************************	
+
+Spring Data Repositories
+Let's start with the JpaRepository – which extends PagingAndSortingRepository and, in turn, the CrudRepository.
+
+Each of these defines its own functionality:
+
+CrudRepository provides CRUD functions
+PagingAndSortingRepository provides methods to do pagination and sort records
+JpaRepository provides JPA related methods such as flushing the persistence context and delete records in a batch
+And so, because of this inheritance relationship, the JpaRepository contains the full API of CrudRepository and PagingAndSortingRepository.
+
+When we don't need the full functionality provided by JpaRepository and PagingAndSortingRepository, we can simply use the CrudRepository.
+
+
+Auditing With JPA
+JPA doesn’t explicitly contain an auditing API, but the functionality can be achieved using entity lifecycle events.
+
+2.1. @PrePersist, @PreUpdate and @PreRemove
+**********************************************************************************************************************************
+
+Pagination With JQL and the setFirstResult(), setMaxResults() API
+The simplest way to implement pagination is to use the Java Query Language – create a query and configure it via setMaxResults and setFirstResult:
+
+Query query = entityManager.createQuery("From Foo");
+int pageNumber = 1;
+int pageSize = 10;
+query.setFirstResult((pageNumber-1) * pageSize); 
+query.setMaxResults(pageSize);
+List <Foo> fooList = query.getResultList();
+The API is simple:
+The API is simple:
+
+setFirstResult(int): Sets the offset position in the result set to start pagination
+setMaxResults(int): Sets the maximum number of entities that should be included in the page
+
+***********************************************************************************************************************************
+Spring Data JPA @Query
+
+In order to define SQL to execute for a Spring Data repository method, we can annotate the method with the @Query annotation — its value attribute contains the JPQL or SQL to execute.
+
+The @Query annotation takes precedence over named queries, which are annotated with @NamedQuery or defined in an orm.xml file.
+
+It's a good approach to place a query definition just above the method inside the repository rather than inside our domain model as named queries. The repository is responsible for persistence, so it's a better place to store these definitions.
+
+Native
+We can use also native SQL to define our query. All we have to do is set the value of the nativeQuery attribute to true and define the native SQL query in the value attribute of the annotation:
+
+@Query(
+  value = "SELECT * FROM USERS u WHERE u.status = 1", 
+  nativeQuery = true)
+Collection<User> findAllActiveUsersNative();
+
+***********************************************************************************************************************************
+
+Configuring a DataSource Programmatically in Spring Boot
+
+Spring Boot uses an opinionated algorithm to scan for and configure a DataSource. This allows us to easily get a fully-configured DataSource implementation by default.
+
+In addition, Spring Boot automatically configures a lightning-fast connection pool — either HikariCP, Apache Tomcat, or Commons DBCP, in that order, depending on which are on the classpath.
+
+-> Datsource can be configured by using DataSourceBuilder
+
+@Configuration
+public class DemoConfiguration {
+	@Bean
+	public DataSource getDataSource() {
+		DataSourceBuilder dataSourceBuilder = new DataSourceBuilder();
+		dataSourceBuilder.setUrl("");
+		dataSourceBuilder.setUsername("");
+		dataSourceBuilder.setPassword("");
+		dataSourceBuilder.setDriverClassName("");
+	}
+}
+
+Can create by keeping all the datasource properties in application.properties file also
+
+Spring Data – CrudRepository save() Method
+ -> save(Entity, null) method inserts a records when id is not passed or id is null
+ -> save(Entity, id) method updates entity when id is passed
+ 
+ 
+ Pagination and Sorting using Spring Data JPA
+ -> Pagination we can acheive by keeping setFirstResult(), setMaxResults() on Query object
+ 
+ public interface ProductRepository extends PagingAndSortingRepository<Product, Integer> {
+
+    List<Product> findAllByPrice(double price, Pageable pageable);
+}
+
+By passing Pageable interface implementation we can get the records in pagination and sort
+
+Pageable sortedByName = PageRequest.of(0, 3, Sort.by("name"));
+Pageable sortedByPriceDesc =  PageRequest.of(0, 3, Sort.by("price").descending());
+Pageable sortedByPriceDescNameAsc =  PageRequest.of(0, 5, Sort.by("price").descending().and(Sort.by("name")));
+
+****************************************8
+@NoRepositoryBean
+Sometimes we want to create repository interfaces with the only goal of providing common methods for the child repositories.
+Of course, we don't want Spring to create a bean of these repositories since we won't inject them anywhere. 
+@NoRepositoryBean does exactly this: when we mark a child interface of org.springframework.data.repository.Repository, Spring won't create a bean out of it.
+@Param
+We can pass named parameters to our queries using @Param:
+
+@Query("FROM Person p WHERE p.name = :name")
+Person findByName(@Param("name") String name);
+Note, that we refer to the parameter with the :name syntax.
+
+@Transient
+We can use this annotation to mark a field in a model class as transient. Hence the data store engine won't read or write this field's value:
+
+@Query
+With @Query, we can provide a JPQL implementation for a repository method:
+
+@Query("SELECT COUNT(*) FROM Person p")
+long getPersonCount();
+Also, we can use named parameters:
+
+@Query("FROM Person p WHERE p.name = :name")
+Person findByName(@Param("name") String name);
+Besides, we can use native SQL queries, if we set the nativeQuery argument to true:
+
+@Query(value = "SELECT AVG(p.age) FROM person p", nativeQuery = true)
+int getAverageAge();
+
+@Lock
+We can configure the lock mode when we execute a repository query method:
+
+@Lock(LockModeType.NONE)
+@Query("SELECT COUNT(*) FROM Person p")
+long getPersonCount();
+The available lock modes:
+
+READ
+WRITE
+OPTIMISTIC
+OPTIMISTIC_FORCE_INCREMENT
+PESSIMISTIC_READ
+PESSIMISTIC_WRITE
+PESSIMISTIC_FORCE_INCREMENT
+NONE
+
+@Modifying
+We can modify data with a repository method if we annotate it with @Modifying:
+
+@Modifying
+@Query("UPDATE Person p SET p.name = :name WHERE p.id = :id")
+void changeName(@Param("id") long id, @Param("name") String name);
+
+@EnableJpaRepositories
+To use JPA repositories, we have to indicate it to Spring. We can do this with @EnableJpaRepositories.
+
+Also note, that Spring Boot does this automatically if it finds Spring Data JPA on the classpath.

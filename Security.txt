@@ -1,0 +1,68 @@
+AuthenticationProvider - Authentication provider provides a two methods authenticate and support
+Provider Manager - getProviders()
+
+	request --> Spring filters -> Provider Manager gives the list of Authentication Provider -> Provider will check the authentication and allow the request
+	
+URL	ReWriting - 	Adding logged in URL params in the URL with ?
+Sticky sessions - always pass the requests to same node from Load balancer - to avoid session problem - problem is when the node crashed
+
+There is a problem with session management in case of having different nodes
+since each node has separate session store -- so user has to login separately for each node 
+This can be avoided by mainatining a common store like a inmemory cache like Redis Cache or Memcached - And backup also has to be maintained for this 
+
+Json Web Tokens
+
+ - Used for authorzation not for authentication
+ - Two machines can talk in a secured way
+ 
+ Industry standard specification - JWT RFC 7519
+ 
+ Structure of JWT
+ --JWT will be in encoded format
+--Three parts
+Encoded Header -- Alogorithm and type of token -- Algorithm 
+Encoded Payload
+Encoded Verify Signature
+
+JSON WEB signature - Signature Algorithms
+JSON WEb ENcryption - ENcryption algorithms
+JSON WEB Algorihtms
+JSON Object signing and ENcryption
+
+Claim names and Claim Values
+
+Keys in payload object are called claims
+Values in payload object are called claim values
+
+There will be a registered claim names also like "sub", "iat", "aud", "jti". We can also register a public claim name
+private claim names 
+
+Token expiry will be decided based in token issued date and token expiry date
+
+SAML Authentication
+
+Federation Of Identity
+ - Use Single Sign on solutions like SAML,Open ID Connect , AUTH
+ For doing single sign on - We have to come into aggregement
+ 
+ IDP - identity Provider server - which do the user identification by looking into user active directory
+ SP - Service provider
+ 
+ Meta data exchange - On successful login, ADP gives token in response and use this token for exchanging between service providers
+ 
+ IDP initiated 
+ 
+ SAML - Open standard provides single sign on for web applications - both for authentication & authorization
+ OAUTH - Its for authorization only
+ 
+ SAML has three entities - 
+ 1. Web Browser (user agent)
+ 2. Indentity Provider
+ 3. Service Provider
+ 
+ While configuring SAML Federation we establish a trust relationship between SP and IDP
+ 
+ On singing on into IDP -- IPD generates SAML assertion
+ 
+ 
+ 

@@ -1,0 +1,220 @@
+Spring boot
+
+	-> Building a spring application is very hard -> Maven dependencies -> XML configuration -> java annotations ->
+		-> View resolver -> dispatcher servlet -> transaction manager -> session factory -> data source all these configurations we have to do
+		
+	-> With spring boot it is easy to get started with spring development
+	-> minimize the amount of manual configuration
+		-> perform auto configuration based on classpath jars and properties
+	-> Helps to resolve dependencies using maven dependencies or gardle like  spring-boot-starter-parent, spring-boot-dependencies, spring-cloud-dependencies
+	-> provide an embeeded http server -> tomcat, jetty, undertow
+	-> spring initializer to quickly create spring project
+	-> can run standalone because of embeede server ex:- java -jar app.jar
+	-> Spring boot project structure
+		-> src
+			main
+				java
+				resources
+					application.properties
+				static -> css, js, HTML, pdf ..
+				templates
+			test
+				java
+		  target
+		  mvnw.sh -> for linux
+		  mvnw.cmd -> it correct version of maven is not available in machine, it automatically download
+	-> spring-boot-starter-web -> A collection of maven dependencies -> spring-web, spring-webmvc, hibernate-validator, tomcat, json
+	-> spring-boot-maven-plugin -> To package executable jar or war archive
+	
+@SpringBootApplication -> @Configuration, @ComponentScan, @EnableAutoConfiguration and Additional configuration
+	@Configuration -> Able to register extra beans with @Bean notation or import other configuration files
+
+SpringApplication -> bootstrap the spring application
+SpringApplication.run -> Creates Application Context, register all beans, starts the embedded tomcat etc.,
+
+Do not use src/main/webapp if packaging is Jar because it is valid for WAR only
+
+Spring Boot Starters 
+	-> collection of dependencies grouped together
+	-> Tested and verified by spring team
+	-> Makes it much easier for developer to get started with spring
+	-> Reduces the amount of Maven configuration
+	-> version for individual dependencies
+	
+spring-boot-starter-security -> starter for securtiy
+By visiting the pom file of starter we can see what are included
+
+spring-boot-starter-parent -> default compiler level, UTF-8
+
+Place main app in the root package -> to make component scan for all sub packages
+To scan other packages -> @SpringBootApplication (scanBasePackages={"<package name>"})
+
+spring-boot-starter-parent - default java version, compiler version
+can override jaav version 
+<properties>
+	<java-version>12</java-version>
+</properties>
+
+all the spring dependencies will inherit versions from spring-boot-start-parent
+spring-boot-maven-plugin to run the application - default configuration of spring boot plugin
+
+spring boot dev tools
+	-> if any changes made to code, manually have to do deploy the code
+	-> Automoatically restart the application when any changes made
+	-> spring-boot-devtools -> automatically restarts applciation when source code is updated
+spring boot actuator
+	-> how to monitor and manage the application
+	-> spring-boot-starter-actuator exposed endpoints to monitor and manage application
+	-> REST endpoints are automatically added to application
+	-> all of the end points are prefixed with actuator
+	/actuator/health - monitors the status of application {status : UP}- health status is customizable
+	/actuator/info - by default we will get {} -> we can customizable by using application properties info.app.name, info.app.description, info.app.version
+	10+ acutator endpoints
+	/auditevents - Audit events for application
+	/beans - List all beans registered in spring context
+	/mappings - list all @RequestMappings
+	-> by default only /health and /info are exposed
+	-> to expose all end points -> management.endpoints.web.exposure.include=* or comma separated endpoints
+	-> Security for actuator end points
+		-> if we dont want to expose all endpoints to everyone
+		-> secured endpoints -> spring securtiy will prompt for login
+			-> default password is user and a generated password in console
+			-> we can specify own username and password -> spring.securtiy.user.name and spring.securtiy.user.password
+			-> we can also use jdbc authentication
+				->public void configure(AuthenticationmanagerBuilder auth) {
+					auth.jdbcAuthentication().dataSource(jdbcDataSource);
+				  }				
+				  public void configure(HttpSecurity htp) {
+					htp.authorizeRequest().antMatchers("/actuator/***").hasRole("ADMIN");
+				  }
+			-> to exclude end points -> management.endpoints.web.exposure.exclude=beans
+			
+Running springboot application from command line
+	-> 1. java -jar jarname
+	-> 2. mvnw spring-boot:run -> using maven
+	-> using spring boot maven pugin to package jar or war
+		-> ./mvnw package -> create war file
+		
+application.properties
+	-> can access directly using @Value="{}"
+	-> logging properties based on package names -> logging.level.org.springframework
+												 -> logging.level.org.hibernate
+												 -> logging.level.org.luv2code 
+												 -> loggin.file=
+	-> web properties  -> server.port
+					   -> server.servlet.contex-path=
+					   -> server.servlet.session.timeout=15m
+	-> actuator properties -> management.endpoints.web.exposure.include=*
+						   -> management.endpoints.web.exposure.exclude=
+						   -> management.endpoints.web.base-path=/actuator
+	-> securtiy properties -> spring.security.user.name = admin
+						   -> spring.security.user.password=topsecret
+	-> data properties 	-> spring.datasource.url=jdbc:mysql://localhost:3306/ecommerce
+						-> spring.datasource.username=scott
+						-> spring.datasource.password=tiger
+						
+-> when package war is specifier but web.xml is not available maven will raise an error for lower versions. To resolve it add <maven-jar-plugin.version>3.1.1</maven-jar-plugin.version>
+			
+
+ThymeLeaf with spring boot
+	-> java template engine
+	-> commonly used to generate HTML views for web apps
+	-> can be used outside webapps
+	-> its a separate project (pronouncitaion - tymeleaf)
+	ThymeLeaf template
+		-> can be a HTML page with ThymeLeaf expressions
+		-> Include dynamic content from ThymeLeaf expressions -> can access java code
+		-> Thymeleaf is processed in server and returned the HTML
+		-> It is similar to JSP (JSP can be used in web environment)
+		-> Thymeleaf use cases (non-web) - Email templates, CSV templates
+		-> Web browser --> Spring MVC Controller --> Thymeleaf template --> Web browser
+	-> Add thymeleaf to pom file -> spring-boot-starter-thymeleaf -> based on this spring will autoconfigure the usage of thymeleaf templates
+	@Controller
+	public class DempController {
+		@GetMapping("/")
+		public String helloWorld(Model theModel) {
+			theModel.addAttribute("theDate", new java.util.Date());
+			return  "helloworld"; //when thymeleaf is in classpath spring will automatically looks for thymeleaf template in src/main/resource/templates/helloworld.html
+		}
+	}
+	
+	-> templates will be placed in src/main/resource/templates
+	-> <xmlns:th="http://www.thymeleaf.org"/> <!---for using thymeleaf expressions -->
+		Ex:- <th:text="'time on server is'+ ${theDate} "/> --> theDate is from Spring MVC model
+	-> Spring boot look for static files in src/main/resources/static directory
+	<link rel="stylesheet" th:href="@{/css/demo.css}"/> @ -> refers to context path of application
+	--> spring boot look for static respources in the following directories in the following order
+		src/main/resources
+		-> /META-INF/resources
+		-> /resources
+		-> /static
+		-> /public
+	-> Thymeleaf tables
+		-> <table border="1">
+			<thead>
+				<tr>
+					<th/>
+					<th/>
+					<th/>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="tempEmployee : ${employees}"> ---employees is a model attribute from controller
+				<td th:text ="${tempEmployee.firstName}"/>
+				<td th:text ="${tempEmployee.lastName}"/>
+				<td th:text ="${tempEmployee.email}"/>
+				</tr>
+			</tbody>
+		</table>
+		
+	-> html tag to automatically redirect to another URL
+		-> <meta http-equiv="refresh" content="0;URL='employees/list'>
+	-> thmeleaf tags
+		<a th:href="@{/employees/showFormForAdd}"></a>
+		<form action="#" th:action="@{/employees/save}" th:object="${employee}" method="POST"/>
+		th:action -> send form data to endpoint
+		th:object -> refers to model attribute
+		<input type="text" th:field="*{firstName}" place-holder="First Name"/> ---- th:field -> selects the property on th:object
+		
+		When form is loaded getter methods will be called
+		When form is submitted setter methods will be called
+		
+	-> <tr th:each="tempEmployee:${employee}">
+		<td>
+			<a th:href="@{/employees/showFormForUpdate(employeeId=${tempEmployee.id}}"></a> --> /employees/showFormForUpdate?employeeId=? --> @RequestParam
+		</td>
+	   </tr>
+	   
+	-> deploy spring boot to external tomcat
+		-> extend the SpringBootServletInitializer
+		-> override the configure(...) method
+		
+		Ex:- 
+	@SpringBootApplication
+	public class DemowebApplication extends SpringBootServletInitializer {
+ 
+	@Override
+	protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
+		return application.sources(DemowebApplication.class);
+	}
+ 
+	public static void main(String[] args) {
+		SpringApplication.run(DemowebApplication.class, args);
+	}
+ 
+}
+
+Resource Handlers for Swagger UI
+
+public class MvcConfig implements WebMvcConfigurer {
+	@Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+		registry.addResourceHandler("swagger-ui.html")
+	      .addResourceLocations("classpath:/META-INF/resources/");
+		registry.addResourceHandler("/webjars/**")
+	      .addResourceLocations("classpath:/META-INF/resources/webjars/");
+    }
+}
+
+Along with this we have to add @EnableSwagger and create a Docket bean in spring boot configuration class
+and add io.springfox/ springfox-boot-starter maven dependency

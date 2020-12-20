@@ -1,0 +1,66 @@
+Spring Data REST
+	-> Creation of REST API for Employee -> controller for CRUD operations -> Service layer and a DAO layer
+	-> Suppose if we want to create REST API for Customer, Student -> we have to repeat same code again
+	-> Spring Data REST is solution
+	-> uses JpaRepository and provides REST APIs for Entities
+	-> Spring Data REST exposes endpoints for free
+		-> POST 	/employees
+		-> GET		/employees
+		-> GET 		/employees/{employeeId}
+		-> PUT		/employees/{employeeId}
+		-> DELETE 	/employees/{employeeId}
+	-> Spring Data REST scans for JpaRepository and exposes endpoints for each entity
+		-> provides endpoints with lowercase of first letter of entity name and provide plurual form
+	-> Add Spring REST to mavan pom file
+		-> spring-boot-starter-data-rest
+	-> Before Employee Rest Controller <----------> Employee Service layer <-----------------> Employee JpaRepository <----------> database
+	    with Spring data Rest -> Spring Data Rest /employees <---------------> Employee Repository <-------------> database	
+	-> Spring Data REST endpoints are HATEOAS complaint
+		-> HATEOAS -> Hypermedia as the engine of Application State
+		-> Hypermedia driven sites provides information to access REST services
+		-> Its like a meta-data of REST Services
+	-> Spring Data REST response using HATEOAS
+	Ex:- GET /employees/3
+		response: {
+					"firstname":"",
+					"lastname":"",
+					"email":"",
+					"_links":{
+						"self":{
+							"href":"http://localhost:8080/employees/3"
+						 }
+						 "employee":{
+							"href":"http://localhost:8080/employees/3"
+						 }
+					}
+				  }
+				  
+	-> For collection,meta-data includes pageSize, total Elements, pages etc
+		ex:- GET /employees
+		response: {
+					"_embedded" : {
+						"employees" : []
+					},
+					"page" : {
+						"size" : 20,
+						"totalElements" : 5,
+						"totalPages":1,
+						"number":0 
+					 }
+				  }
+	-> HATEOAS uses Hypertext Application Language (HAL) data format for response
+	-> Spring data rest pagiantion, sorting and searching, Query Domain Specific Language(QDSL), Extending and adding queries with JPQL
+	-> Specify plural name with annotation
+	@RepositoryRestResource(path="members")
+	public interface EmployeeRepository implements JpaRepository<Employee, Integer> {
+	}
+	-> endpoints /members
+	-> pagination -> http://localhost:8080/employees?page=0
+	-> application properties -> spring.data.rest.base-path, spring.data.rest.default-page-size(no of erecords per pa), spring.data.rest.max-page-size
+	-> sorting -> http://localhost:8080/employees?sort=lastName, http://localhost:8080/employees?sort=firstName,desc, http://localhost:8080/employees?sort=firstName,lasName,desc
+	
+	
+	
+The setup for a Spring RESTful application is the same as the one for the MVC application with the only difference being that there is no View Resolvers and no model map.
+
+The API will generally simply return raw data back to the client – XML and JSON representations usually – and so the DispatcherServlet bypasses the view resolvers and returns the data right in the HTTP response body.

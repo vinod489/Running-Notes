@@ -1,0 +1,38 @@
+Maven
+
+	-> Project Management Tool
+	-> to build management and Dependencies
+	-> Without Maven download JAR files from each site and add manually jars to lib folder
+	-> With maven -> maven will go out and download JAR files for those projects for you
+				  -> maven will make those JAR files available during compile/run
+				  -> Its like give Maven a shopping list - Maven get it from Maven Repository
+				  -> Maven read config file and check for the files in local repository which is a local cache
+					-> If it is not available get from remote site
+				  -> Maven downloads the required dependencies
+				  -> Maven will add Jar files to build path
+				  -> Maven solves the directory structure for a project
+				  -> Project
+						|-----src
+								|----main
+									 |----java
+									 |----resources
+									 |----webapp
+								|----test --Unit testing code and properties file
+									 |-----java
+									 |-----resources
+						|-----target - destination path for compiled code
+						|-----pom.xml
+POM File
+	-> Project Object Model file -> shopping list for Maven
+		-> Project Metadata -> like project name, artifacts, version, packaging
+		-> dependencies
+		-> plugins
+	-> Project coordinates uniquely identify the project
+		-> groupId	-> company ID..
+		-> artifact -> name for project
+		-> version -> 1.0.RELEASE -> its optional
+		-> Nomicleature -> GAV
+Maven Archetypes
+	-> maven-archetype-quickstart -> to generate a sample maven project
+	-> maven-archetype-webapp -> to generate a sample web application and others
+	-> we can create a project using these archetypes from IDE or command line

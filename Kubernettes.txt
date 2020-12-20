@@ -1,0 +1,15 @@
+
+Pod -> A single unit of deployment
+To deplooy a application in kubernetees cluster we minimum need one pod
+Where pods are located
+	-> we generally deploy pods on worker node
+	-> every pod running on node contians IP address
+	-> one main container + helper containers
+	-> One POD communicate with another POD using its IP
+	-> All the containers running on a POD ust have unique IP
+	-> Contianers with in the same POD can communicate with same IP
+	-> To deploy a POD we can create by describing a commands in yml file
+		-> apiVersion - Which version of kubernetes API you are using
+		-> kind - Whta kind og object you want to create (Pod/service..)
+		-> metdata - Data helps uniquely identifying the object
+		-> spec - desired state of object

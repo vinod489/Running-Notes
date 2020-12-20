@@ -1,0 +1,14 @@
+JMS - Message oriented middleware API to commiunicate between two applications asynchronously
+AWS SQS - Message queueing service
+APACHE Active MQ -
+APACHE QPID
+IBM MQ
+JBoss Messaging - HornetQ
+Open message q - oracle - glassfish server
+Open JMS group
+Oracle AQ - Oracle advance queueing - weblogic server
+RabbitMQ - AMQP - Advanced Message queueing protocol
+Apache Kafka - open source distributed event streaming platform
+
+JMS vs Java Mail - Java Mail API is to send email with attachments - send emails - read emails 
+				  - To send emails we need mail server API - Its a messaging between human to human

@@ -1,0 +1,601 @@
+1. Motivation of Multiple Threads
+
+ --> Responsiveness by using concurrency
+ --> Performance by using parallelism
+ 
+ Operating System
+ 
+ --> When we switch on the system OS loads into memory
+ --> OS provides a interaction between hardware and software
+ --> All the applications resides in a disk just like any other file
+ --> When we run application, a instance of application will be created on memory and that instance is called process/ context of application
+ --> Each process is independent -- have metadata like process ID, heap, files accessed and atleast single thread
+ --> Thread contains two main things -- stack and instruction pointer
+   --> Stack is a local region in memory where local variables and functions are executed
+   --> Instruction pointer is a pointer points to next instruction that is executed by a thread
+ --> All the components in process shared by all threads
+ 
+ 2. OS fundamentals
+ 
+  --> Each process multiple threads and all threads compete with each other
+  --> Context switch -> Run one thread stop it and run another thread stop it and run again another thread -- its not cheap
+  --> Each thread consumes resources in cpu and memory
+  --> Context switch involves storing data for one thread and restoring data for another thread
+  --> Context switch - OS spends more time in doing context switching
+  --> Context switching betwee threads in same process is cheaper than context switching between threads of different process
+  
+  Thread Scheduling
+  -->Imagine two process Text editor and Music player
+  -->Two thread in music player -- One is playing and another thread to response of mouse click
+  -->Two threads in note pad -- One is for UI and respond to clicks and another one is for saving changes for every two clicks
+  -->Which thread will execute thread -- Imaging first come first serve -- Long thread can cause thread starvation
+	-- May cause UI threads being unresponsive - bad user experience
+  --> If we keep shorter tasks threads schedule first -- If UI events keep on coming longer duration threads will keep on pending
+  --> Threads scheduling decides by OS -- Creates a timeperiod and in each time period(Epoch) it executes all/few threads based on dynamic priority
+	-- Dynamic priority = Static priority+Bonus
+	-- Static priority given by developer
+	-- Bonus is adjusted by OS in every Epoch(time period) 
+	-- OS will give prefence to threads that didnot complete in last Epochs - prevent thread starvation
+
+Thread vs Process
+
+ --> MultiThread Architecture
+	-- If tasks share lot of data
+	-- Threads are much faster to create and destroy
+	-- Switching between threads of same process is faster
+--> Multi Process
+	-- If Security and Stability are higher importance -- Not to bring down the app if something goes wrong with one thread
+	-- Tasks are unrealted to each other
+
+Thread.Sleep --> Instructs CPU not to schedule this thread until sleep time is over
+
+Threads Performance 
+
+Latency - Time to completion to task - Measure in time units 
+		- Ex movie is recorded in 30 frames per second - Video player has to play same - Here latency is important rather than throughput
+Throughput - Amount of tasks completed in a given period - Measured in tasks/time
+		- Ex Measure Learning program - In a 24 hour period it has to consume and produce a result - The more date it analyazed - the better the result
+
+For  single task single thread latency = T
+For multiple tasks running by multiple threads N parallely latency = T/N
+
+Number of threads = NUmber of cores
+
+Latency will be improved when number of tasks divided by a threads  - Flower coloring example - Find a grey pixel and color to red
+
+Throughput -> it will be improved when a individual task is given for each thread instead of doing a tasks one by one 
+	- Create a HTTP server with a executor of threads to find a word in a large text, send a multiple requests to this server using jmeter and find throughput. It increases with number of threads till some pointer
+
+Data Sharing
+
+-- Stack - its a memory region stores method arguments and a local primitive and references to object
+		 - Its not sharable it is separate for each thread
+		 - It is fixed in size
+		 -- More deep calling of code raises stackoverflow exception
+-- Heap - its a sharable region between threads and managed by garbage collector
+		- Objects, class variables, static variables are created in this region
+		- Objects created inside methods also will be created in this region
+
+-- Critical section - A block which needs to be accessed by only one thread at a time is called critical region 
+	- Ex:- One thread incrementing and another thread decrementing - We wont get the final output as zero because there is no sync between threads on when to execute increment and when to execute decrement
+
+--Synchronization - It protects the critical section to be accessed by only one thread at a time
+				  - When synchronization is used for a more than one method inside a class 
+					- if one thread is executing a one method on this class object no other thread can't enter any other synchronized 		method of the same object 
+					public synchronized void methodA() {			public synchronized void methodA() {
+																=>		synchronized(this){}
+					}												}
+					public synchronized void methodB() {			public synchronized void methodB() {
+																=>		synchronized(this){}
+					}												}
+					
+					Threads are reentrant -> Means one thread got a lock on one syncronized method of object it no need to acquire lock to get into another synchronized method
+					
+					- Synchronization can be applied to a block of code using lock objects
+						Object lock = new Object();
+						public synchronized void methodA() {	
+							synchronized(lock) {
+							}
+						}
+					
+Atomic Operations -> Which are not affected by running the code by multiple threads parallely
+
+Object assignments are atomic -> Means setter and getters are atomic
+Assigning to primitive types are atomic except long and double
+long and double are 64-bits and java doesn't guarnatee that these are atomic
+first 32bits of a value can be written by one thread and othere 32bits written by another thread
+x = y; x_lower_32bits = y_lower_32bits,x_upper_32bits = y_upper_32bits
+
+By using volatile keyword we can make these assignments atomic/thread-safe
+
+volatile long x;volatile long y;
+
+Race Condition
+ - Condition when multiple threads are accessing a shared resources
+ - Atleast one thread is modifying the resources
+ - the timing of threads scheduling may cause incorrect results
+ - core of the problem is non atomic operations performed on shared resource
+ 
+ Data Race
+  - Compiler and CPU mayy execute the instructions out of order to optimize performance and utilization
+  - They will do so while maintaining the logical correctness of code
+  - Out of order execution by the compiler and cpu are important features to speed up the code
+  - compiler re-arranges the instructions for better
+	- Branch prediction
+	- Vectorization - parallel instruction execution
+	- Prefetching instructions - better cache performance
+  - CPU re-arrange instructions for better hardware utilization
+
+void someFn() {
+x =1;
+y = x+2;
+z = y+3;
+}
+Cant be rearranged as every line depends on previous lines;
+
+void someFn2() {
+x++;
+y++
+}
+can be rearranged - Leads to data race - because this rearranged code can be executed by multiple threads in another core
+- Compiler and CPU doesnt know that another is executing this code in another core
+
+- Synchronization of methods which modify shared variables - to protect against accessing the shared code between more threads
+	- It doesn't matter the rearrange of instructions since only one thread run the instructions
+- Declaring variables as volatile
+
+Every shared variable that accessed by a more than one thread - should be guarded by a synchronized block or declared volatile
+
+
+Fine grained locking - Should we have a separate lock for every shared resource 
+vs Coarse grained locking - Shoule we have a same lock for all shared resources
+
+
+Coarse grained locking -->
+
+class locking {
+ DBConnection dbConnection;
+ List<Stirng> queue;
+ 
+ public synchronized void addConnection() {
+ }
+ 
+ public synchronized void addToQueue() {
+ }
+}
+
+As both methods are locked on a same object -> its a single lock-> which causes more suspension then running the code paralelly
+- As two methods can be run parallely - we can use indiviual locks for each methods
+
+Fine Grained lock - More than one lock
+class locking {
+ DBConnection dbConnection;
+ List<Stirng> queue;
+ 
+ public void addConnection() {
+	synchronized(dbConnection) {
+	}
+ }
+ 
+ public void addToQueue() {
+	synchronized(queue) {
+	}
+ }
+}
+
+
+Dead lock - because of multiple locks
+- Every one wants to make progress but depends on others
+
+Thread1    Thread2
+1.lock(A)
+			2.lock(B)
+			3.lock(A)
+4.lock(B)
+
+Enforcing a strict order on lock acquisition to prevent dead locks
+
+
+Reentrant lock
+-- Works like synchronozied keyword but
+-- requires explicit lock and unlocking
+
+-- Disadvantages - 1.If we forgot to unlock 
+				   2. If unlock is never reached like unloacking after return statement and 
+				   3. if excpetion is thrown before unlock
+-- Advantages - More control over lock
+			  - And has provided methods - 1.getQueueThreads() - list of threads waiting for lock
+										   2.getOwner() - Owner of thread that currently own a lock
+										   3. isHeldByCurrentThread() - if lock is held by current thread
+										   4. isLocked() - if the lock is held by any thread
+										   All these methos useful in case of testing multithreading apps
+										   
+										   For fairness pass true to constructor RentrantLock(true) - if one thread is acquiring lock multiple times other threads starves
+	ReentrantLock.lockInterruptibly() - when one object is trying to lock using obj.lock() - other thread cant interrupt by calling .interrupt() method. In this case if we use obj.lockInterruptibly() method - it can be interrupted by calling interrupt method
+	
+	ReentrantLock.tyrLock() - trylock() - returns true if object is available for locking or false and moves to next instruction
+							   tryLock(long timeOut, TimeUnit unit)
+							   
+	lockObject.lock()               if(lockObject.tryLock()) {
+	try {								try {
+		useResource()						useResource()
+		}								 }
+	finally {							 finally {
+		lockObject.unlock()					lockObject.unlock()
+	}									}
+									else {
+									}
+
+	
+RenentrantReadWriteLock - Lock both read and write
+		When to use - When read operations are predominant
+					- When read operations are not so fast - Read from many variables/Read from a complex data structure
+					- Mutual exclusion of reading threads impact the performance negatively
+					
+	RenentrantReadWriteLock rwlock = new RenentrantReadWriteLock();
+	Lock readLock = rwlock.readLock();
+	Lock writeLock = rwlock.writeLock();
+	
+	Mutliple threads can acquire read lock simultaneosuly
+	readlock keeps count of how many threads are currently holding a lock
+	readLock.lock()
+	try {
+		readFromSharedResources();
+	} finally {
+		readLock.unlock;
+	}
+	
+	Only one thread can acquire a lock at once
+	writeLock.lock()
+	try {
+		writeToSharedResources();
+	} finally {
+		writeLock.unlock;
+	}
+	
+	MutualExclusion between readers and writers
+		- If a write lock is acquired, no other thread can acquire a read lock
+		- if atleast one thread acquires a read lock, no other thread can acquire a write lock
+		
+-- Semaphore - Binary Semaphore
+
+Restrict number of users to a resorce or a group of resources unli elock which gives access to only one user
+Ex:- parking lot - suppose 8 parking lots - only 8 cars are given to a access
+
+Semaphore semaphore = new Semaphore(NUMBER_OF_PERMITS);
+semaphore.acquire(); -- Wait for a permit
+useResource()
+semaphore.release();
+
+semaphore.acquire(5); - give access to 5 permits to a thread for a resource
+semaphore.release(5); - release more than one 
+
+semaphore.acquire(); -- calling when no permits are avaiable is equivalent to a blocked thread
+
+semaphore.acquire(); == lock when there is only one permit
+
+semaphore vs lock
+ -- Doesnt have owner thread
+ -- May threads can acquire a permit
+ -- Same thread can acquire a semaphore multiple times
+ 
+ void function1() {
+ semaphore.acquire();
+ semaphore.acquire(); //Thread is blocked -- some other thread has to release the semaphore
+ }
+ 
+ semaphore can be released by any thread even it is not accessed
+
+Thread1
+semaphore.acquire() 
+sharedresource();
+semaphore.release();
+
+Thread2
+semaphore.release() --> release when thread 1 is in sharedresource() critical section
+semaphore.acquire() -> another thread enters into critical section
+-- its a bug
+
+semaphore - producer consumer problem
+
+semaphore full = new semaphore(0);
+Producer empty = new semaphore(1);
+item = null;
+
+consumer
+while(true) {
+	full.acquire();// thread will be blocked here as there are no permits// once producer releases it will proceed
+	consume(item);//consume item
+	empty.release();//releases to make producer proceed
+}
+
+producer
+while(true) {
+	empty.acquire();// 1.thread will acquire -- 2. thread will be blocked here until cosumer completes
+	item = produceNewItem();//1.produce an item
+	full.release();//1.release this semaphore to make consumer start
+}
+
+if consumer is faster than producer - cpu will be in suspended
+if consumer is slower than producer - producer should wait until consumer consumes
+
+Condition Variables
+
+Lock lock = new RenentrantLock();
+Condition condition = lock.newCondition();
+String username= null;password=null;
+
+database thread
+lock.lock();
+try {
+	while(username==null || password==null)
+	condition.await();//unlocks lock and puts thread to sleep so that another thread run
+}
+finally{
+lock.unlock();
+}
+dostuff();
+
+UIThread
+
+lock.lock();
+try{
+usename= utextbox.getText();
+password=upassword.getText();
+condition.signal();//it will wakeup the sleep thread waiting on conditional variable on await()
+//condition.signalAll();
+}
+finally{
+lock.unlock();//until lock is unlocked the sleep thread wont start
+}
+
+wait()/notify() & notifyAll()
+
+object class contains these 3 methods 
+
+wait() makes the current thread to wait until another thread wakes it up
+in wait state thread wont consume any cpu
+notify() wakes up a single thread on that object
+noyifyAll() wakes up all threads
+
+to call wait,notify and notifyall() first we need to acquire lock on that object
+If lock is not acquired there will be a race condition
+
+Ex:- Consumer will go to wait mode until producer produces and notify the consumer
+If Consumer wait is not in lock mode then producer produces and notify consumer before consumer goes into wait and miss the notification from producer
+
+
+Lock free algorithms
+
+Whats wrong with locks
+
+- Deadlocks are usually unrecoverable
+- Slow critical section - One thread may slow the other thread - If one thread holds the lock for more time it makes other threads slow
+- Priority Inversion - Two threads sharing a lock - Means lock on a same object - UI Thread and a Low priority thread(Document Saver)
+					  - If low priority thread acquires a lock and preempted (scheduled out) by OS - means OS is not scheduling the low priority thread and hence
+						lock will not be released by low priority thread and hence high priority thread got struck
+- Thread dies/interrupted /forgets to release a lock - Making all threads in waiting state
+- Performance overhead - Thread A acquires lock - Thread B is blocked - Thread B is scheduled out by OS - Thread B is again scheduled by OS - Context switching
+
+Lock Free Techniques
+
+Why do we need threads - Multiple threads accessing resources 
+Non-Atomic operations is the reason
+	-A single java operation turns into one or more hardware operations
+	- Ex:- counter++ turns into 3 operations
+			- Read count
+			- Calculate new value
+			- Store value to count
+	- between these three instructions another thread may come and read value
+	- If it is completed in single hardware instruction - No problem
+
+Avoiding data races
+	- Use volatile primitive and type references
+	- java.util.concurrent.atomic package - java10 provides few AtomicClasses for writing code without locks
+
+- Atomic Integer
+	-AtomicInteger atomicInteger = new AtomicInteger(10);
+	-atomicInteger.incrementAndGet();//return the new value
+	-atomicInetegr.getAndIncrement();//return the previous value
+	-atomicInetegr.addAndGet(10);//return the new value
+	-atomicInteger.getAndAdd(10);//return the previous value
+There is still a race condition betweent wo separate instructions
+	- atomicInteger.incrementAndGet(); atomicInteger.addAndGet(-5);
+	
+AtomicReference<T>
+	- Gives reference to a class and gives us a ability to perform atomic operations on that class
+	- We can initialize atomic reference with an existing object by passing it to consutructor or set the reference later
+	- AtomicReference<V>, V get() and set(V v)
+	- boolean compareAndSet(V expectedValue, V new Value) - Assigns new value if currentvalue == expected value and ignores if not equal
+		- Available in all atomic classes
+	
+	
+	
+countdownlatch
+
+CountDownLatch in Java is a kind of synchronizer which allows one Thread to wait for one or more Threads before starts processing. This is a very crucial requirement and often needed in server-side core Java application and having this functionality built-in as CountDownLatch greatly simplifies the development.
+
+
+A synchronization aid that allows one or more threads to wait until a set of operations being performed in other threads completes.
+
+A CountDownLatch is initialized with a given count. The await methods block until the current count reaches zero due to invocations of the countDown() method, after which all waiting threads are released and any subsequent invocations of await return immediately. This is a one-shot phenomenon -- the count cannot be reset. If you need a version that resets the count, consider using a CyclicBarrier.
+
+A CountDownLatch is a versatile synchronization tool and can be used for a number of purposes. A CountDownLatch initialized with a count of one serves as a simple on/off latch, or gate: all threads invoking await wait at the gate until it is opened by a thread invoking countDown(). A CountDownLatch initialized to N can be used to make one thread wait until N threads have completed some action, or some action has been completed N times.
+
+A useful property of a CountDownLatch is that it doesn't require that threads calling countDown wait for the count to reach zero before proceeding, it simply prevents any thread from proceeding past an await until all threads could pass. 
+
+Another typical usage would be to divide a problem into N parts, describe each part with a Runnable that executes that portion and counts down on the latch, and queue all the Runnables to an Executor. When all sub-parts are complete, the coordinating thread will be able to pass through await. (When threads must repeatedly count down in this way, instead use a CyclicBarrier.)
+
+ class Driver2 { // ...
+   void main() throws InterruptedException {
+     CountDownLatch doneSignal = new CountDownLatch(N);
+     Executor e = ...
+
+     for (int i = 0; i < N; ++i) // create and start threads
+       e.execute(new WorkerRunnable(doneSignal, i));
+
+     doneSignal.await();           // wait for all to finish
+   }
+ }
+
+ class WorkerRunnable implements Runnable {
+   private final CountDownLatch doneSignal;
+   private final int i;
+   WorkerRunnable(CountDownLatch doneSignal, int i) {
+      this.doneSignal = doneSignal;
+      this.i = i;
+   }
+   public void run() {
+      try {
+        doWork(i);
+        doneSignal.countDown();
+      } catch (InterruptedException ex) {} // return;
+   }
+
+   void doWork() { ... }
+ }
+
+ 
+ 
+cyclicbarrier -
+
+CyclicBarrier is used to make threads wait for each other. It is used when different threads process a part of computation and when all threads have completed the execution, the result needs to be combined in the parent thread. In other words, a CyclicBarrier is used when multiple thread carry out different sub tasks and the output of these sub tasks need to be combined to form the final output. After completing its execution, threads call await() method and wait for other threads to reach the barrier. Once all the threads have reached, the barriers then give the way for threads to proceed.
+
+CyclicBarrier is a natural requirement for a concurrent program because it can be used to perform the final part of the task once individual tasks are completed.
+
+All threads which wait for each other to reach barrier are called parties, CyclicBarrier is initialized with a number of parties to wait and threads wait for each other by calling CyclicBarrier.await() method which is a blocking method in Java and blocks until all Thread or parties call await(). 
+
+we have to see how CountDownLatch can be used to implement multiple threads waiting for each other. If you look at CyclicBarrier it also does the same thing but it is different you can not reuse CountDownLatch once the count reaches zero while you can reuse CyclicBarrier by calling reset() method which resets Barrier to its initial State. 
+
+What it implies that CountDownLatch is good for one-time events like application start-up time and CyclicBarrier can be used in case of the recurrent event e.g. concurrently calculating a solution of the big problem etc
+
+A synchronization aid that allows a set of threads to all wait for each other to reach a common barrier point. CyclicBarriers are useful in programs involving a fixed sized party of threads that must occasionally wait for each other. The barrier is called cyclic because it can be re-used after the waiting threads are released.
+
+public class CyclicBarrierExample {
+
+    //Runnable task for each thread
+    private static class Task implements Runnable {
+
+        private CyclicBarrier barrier;
+
+        public Task(CyclicBarrier barrier) {
+            this.barrier = barrier;
+        }
+
+        @Override
+        public void run() {
+            try {
+                System.out.println(Thread.currentThread().getName() + " is waiting on barrier");
+                barrier.await();
+                System.out.println(Thread.currentThread().getName() + " has crossed the barrier");
+            } catch (InterruptedException ex) {
+                Logger.getLogger(CyclicBarrierExample.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (BrokenBarrierException ex) {
+                Logger.getLogger(CyclicBarrierExample.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
+
+    public static void main(String args[]) {
+
+        //creating CyclicBarrier with 3 parties i.e. 3 Threads needs to call await()
+        final CyclicBarrier cb = new CyclicBarrier(3, new Runnable(){
+            @Override
+            public void run(){
+                //This task will be executed once all thread reaches barrier
+                System.out.println("All parties are arrived at barrier, lets play");
+            }
+        });
+
+        //starting each of thread
+        Thread t1 = new Thread(new Task(cb), "Thread 1");
+        Thread t2 = new Thread(new Task(cb), "Thread 2");
+        Thread t3 = new Thread(new Task(cb), "Thread 3");
+
+        t1.start();
+        t2.start();
+        t3.start();
+     
+    }
+}
+
+When to use CyclicBarrier in Java
+Given the nature of CyclicBarrier it can be very handy to implement map reduce kind of task similar to fork-join framework of Java 7, where a big task is broker down into smaller pieces and to complete the task you need output from individual small task e.g. to count population of India you can have 4 threads which count population from North, South, East, and West and once complete they can wait for each other, When last thread completed their task, Main thread or any other thread can add result from each zone and print total population. You can use CyclicBarrier in Java :
+
+1) To implement multi player game which can not begin until all player has joined.
+2) Perform lengthy calculation by breaking it into smaller individual tasks, In general, to implement Map reduce technique.
+
+Important points of CyclicBarrier in Java
+1. CyclicBarrier can perform a completion task once all thread reaches to the barrier, This can be provided while creating CyclicBarrier.
+
+2. If CyclicBarrier is initialized with 3 parties means 3 thread needs to call await method to break the barrier.
+3. The thread will block on await() until all parties reach the barrier, another thread interrupt or await timed out.
+4. If another thread interrupts the thread which is waiting on the barrier it will throw BrokernBarrierException as shown below:
+
+java.util.concurrent.BrokenBarrierException
+        at java.util.concurrent.CyclicBarrier.dowait(CyclicBarrier.java:172)
+        at java.util.concurrent.CyclicBarrier.await(CyclicBarrier.java:327)
+
+5.CyclicBarrier.reset() put Barrier on its initial state, other thread which is waiting or not yet reached barrier will terminate with java.util.concurrent.BrokenBarrierException.
+
+That's all on What is CyclicBarrier in Java When to use CyclicBarrier in Java and a Simple Example of How to use CyclicBarrier in Java. We have also seen the difference between CountDownLatch and CyclicBarrier in Java and got some idea where we can use CyclicBarrier in Java Concurrent code.
+
+phaser
+
+The Phaser allows us to build logic in which threads need to wait on the barrier before going to the next step of execution.
+
+We can coordinate multiple phases of execution, reusing a Phaser instance for each program phase. Each phase can have a different number of threads waiting for advancing to another phase. We'll have a look at an example of using phases later on.
+
+To participate in the coordination, the thread needs to register() itself with the Phaser instance. Note that this only increases the number of registered parties, and we can't check whether the current thread is registered – we'd have to subclass the implementation to supports this.
+
+The thread signals that it arrived at the barrier by calling the arriveAndAwaitAdvance(), which is a blocking method. When the number of arrived parties is equal to the number of registered parties, the execution of the program will continue, and the phase number will increase. We can get the current phase number by calling the getPhase() method.
+
+When the thread finishes its job, we should call the arriveAndDeregister() method to signal that the current thread should no longer be accounted for in this particular phase.
+
+The call to the arriveAndAwaitAdvance() will cause the current thread to wait on the barrier. As already mentioned, when the number of arrived parties becomes the same as the number of registered parties, the execution will continue.
+
+After the processing is done, the current thread is deregistering itself by calling the arriveAndDeregister() method.
+
+Let's create a test case in which we will start three LongRunningAction threads and block on the barrier. Next, after the action is finished, we will create two additional LongRunningAction threads that will perform processing of the next phase.
+
+When creating Phaser instance from the main thread, we're passing 1 as an argument. This is equivalent to calling the register() method from the current thread. We're doing this because, when we're creating three worker threads, the main thread is a coordinator, and therefore the Phaser needs to have four threads registered to it:
+
+	ExecutorService executorService = Executors.newCachedThreadPool();
+	Phaser ph = new Phaser(1);
+	 
+	assertEquals(0, ph.getPhase());
+
+The phase after the initialization is equal to zero.
+
+The Phaser class has a constructor in which we can pass a parent instance to it. It is useful in cases where we have large numbers of parties that would experience massive synchronization contention costs. In such situations, instances of Phasers may be set up so that groups of sub-phasers share a common parent.
+
+Next, let's start three LongRunningAction action threads, which will be waiting on the barrier until we will call the arriveAndAwaitAdvance() method from the main thread.
+
+Keep in mind we've initialized our Phaser with 1 and called register() three more times. Now, three action threads have announced that they've arrived at the barrier, so one more call of arriveAndAwaitAdvance() is needed – the one from the main thread:
+
+	executorService.submit(new LongRunningAction("thread-1", ph));
+	executorService.submit(new LongRunningAction("thread-2", ph));
+	executorService.submit(new LongRunningAction("thread-3", ph));
+	 
+	ph.arriveAndAwaitAdvance();
+	 
+	assertEquals(1, ph.getPhase());
+
+After the completion of that phase, the getPhase() method will return one because the program finished processing the first step of execution.
+
+Let's say that two threads should conduct the next phase of processing. We can leverage Phaser to achieve that because it allows us to configure dynamically the number of threads that should wait on the barrier. We're starting two new threads, but these will not proceed to execute until the call to the arriveAndAwaitAdvance() from the main thread (same as in the previous case):
+
+	executorService.submit(new LongRunningAction("thread-4", ph));
+	executorService.submit(new LongRunningAction("thread-5", ph));
+	ph.arriveAndAwaitAdvance();
+	 
+	assertEquals(2, ph.getPhase());
+	 
+	ph.arriveAndDeregister();
+
+After this, the getPhase() method will return phase number equal to two. When we want to finish our program, we need to call the arriveAndDeregister() method as the main thread is still registered in the Phaser. When the deregistration causes the number of registered parties to become zero, the Phaser is terminated. All calls to synchronization methods will not block anymore and will return immediately.
+
+Reactive Programming - Threads in java
+JMS and Apache kafka
+
+C fucntion pointers, interupts	

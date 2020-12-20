@@ -1,0 +1,53 @@
+Nameless anyonymous function - Lambda expression
+No Function name
+No Return type
+No Access Modifiers
+
+Lambda Expression is assigned to a variable - Reference variable of functional interface
+
+Functional Interface - Contains only one abstract method
+
+Examples - Runnable -> run()
+		   Comparator - compareTo()
+		   Callable - call()
+
+@FunctionalInterface Annotation - Avoids accidental addition of new methods in interface in future releases
+								- How to pass lambda expression to a methods and how to retun lambda expressions from methods
+
+Double colon operator - Consturctor or method reference - It should have same number of parameters simlilar to functional interface method
+					  - Access modifier, return types are not required to match
+
+Default Methods - Default functions can be defined inside interface to add new functionalities to existing interface without disturbing the already implemented classes
+
+Static Methods - Static methods can be interface - Can be used for utility methods - We cannot override them in implementation classes
+			   - We can only invoked them using Interface name - We cant invoke using interface reference, implemented class, implemented class reference
+			   
+Difference between default methods and static methods is we cannpt override them in implmenetation classes
+
+With default methods and static methods - Interface may look like abstract class but still there is an difference that we cannot create constructor for interface. Interface is for full absraction and absrtact classes for partial abstraction
+
+java.util.function package
+
+- Predicate
+- Bipredicate takes two parameters
+
+java.util.Function interface
+
+Function<ReturnType, ParameterType>
+
+R apply(T) -> absrtact method
+
+Streams - To process the stream of objects
+java.io.stream for data processing
+java.util.stream 
+
+- Normal stream  and Parallel Stream
+
+java.util.Collection has default methods -> stream() and parallelStream()
+
+
+Terminal and non-terminal operations
+
+Terminal Operations -  after the operation is performed, the stream pipeline is considered consumed, and can no longer be used
+forEach is a terminal operation - once stream is processed it cant be used again
+map() -> produces a new stream after applying a function of each element of the orginal stream

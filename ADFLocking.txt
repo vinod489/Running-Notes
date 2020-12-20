@@ -1,0 +1,33 @@
+Locking modes 
+
+Optimistic - while committing the changes, will check the modified row state with database and throw exception if it is already modified
+
+User1 User2
+User1 - modified a record and committed - Before committing it will acquire a lock and immediately releases
+User2 - Modified a record and committed
+oracle.job.RowInconsistentException exception
+
+Pessimistic - when the user started editing a record - a database lock will be applied - Another user could not do changes to the record
+
+User 1 User2
+User2 - Modified a record and saved the changes
+User1 - Edited the first record - Database lock will be applied. Could not commit as it is a stale data,obselete data
+User2- Could not edit the data as it is already locked by user1
+Deadlock oracle.job.AlreadyLockedException
+
+Optupdate 
+
+User1 User2
+User1 - modified a record and committed - Committed successfully
+User2 - Modified a record and committed -  JBO-25057: Entity row update operation did not find matching row:  Entity name Employees, key oracle.jbo.Key[100 ]
+
+
+
+How to call EntityImpl methods/custommethods
+
+To call any EntityImpl method it should be done through ViewRowImpl class
+Because each row is an instance of EntityImpl
+
+Ex:- EmployeesViewRowImpl currRow = (EmployeesViewRowImpl)Row;
+EmployeesImpl emplEntity = currRow.getEmployees();
+emplEntity.<customMethod>();

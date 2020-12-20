@@ -1,0 +1,6 @@
+Effective Java
+
+Item1 - Static factory methods instead of constructors
+Adv1 - Can give own names instead of class names like constructors
+Adv2 - They are not required to create new object every time they are invoked - Instance controlled
+Adv3 - Can return object of any subtype of their return type

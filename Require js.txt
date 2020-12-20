@@ -1,0 +1,9 @@
+RequireJS is a JavaScript file and module loader that simplifies managing library references and is designed to improve the speed and quality of your code.
+
+RequireJS implements the Asynchronous Module Definition (AMD) API which provides a mechanism for asynchronously loading a module and its dependencies. 
+
+ Define a Module § 1.3
+
+A module is different from a traditional script file in that it defines a well-scoped object that avoids polluting the global namespace. It can explicitly list its dependencies and get a handle on those dependencies without needing to refer to global objects, but instead receive the dependencies as arguments to the function that defines the module. Modules in RequireJS are an extension of the Module Pattern, with the benefit of not needing globals to refer to other modules.
+
+There should only be one module definition per file on disk. 

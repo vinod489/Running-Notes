@@ -1,0 +1,772 @@
+Hibernate
+ - Hibernate is a framework for presisiting or storing a java objects to database
+Benefits of Hibernate
+	- Handles all low level SQL
+	- Minimizes the JDBC Code
+	- provides Object relational Mapping
+	- developer maps java object to database
+	- we can provide configuration using XML, annotations and java code
+	
+Saving to database
+
+Student student = new Student("a",1,"b");
+int id = session.save(student);
+
+session is a hiberante object
+Hibernate take the object and store it in database
+
+Reteriving from database
+session.get(Student.class, Id);
+Hiberante go to this table and find a record with the primary key and return it
+it tkae care of query, wrapping to object
+
+Get all records
+Query query = session.createQuery("from Student"); (Hibernate Query Language - HQL)
+query.list();
+
+Hibernate and JDBC
+	-> Hiberante uses JDBC for all database operations
+	-> Hiberante internally uses JDBC - it do all low levels JDBC
+	-> Hiberante uses JDBC driver for communicating with database
+	-> Hiberante 5.2 requires java8
+
+setting Hibernate in Eclipse
+	->Downoad Hiberante ORM libraries and import into lib folder
+	->Mysql default port 3306
+	->Mysql8
+	
+Hibernate Configuration
+	->Hibernate Config file -> tells how to connect to database
+	-> hiberante.cfg.xml
+		-><hiberante-configuration>
+			<session-factory>
+				<property name="connection.driver_class">com.mysql.jdbc.driver</property>
+				......url
+				......username
+				......password
+				......connection poolsize
+				......dialect -> org.hiberante.dialoct.MyQLDialect ->syntax for sql
+				......showsql ->true for showing queries in logs
+				......current_session_context_class -> thread -> use thread model
+			</session-factory>
+		</hibernate-configuration>
+
+Annotation
+	-> java class mapped to database table
+	-> two options for mapping
+		->XML Config (legacy)
+		->Java Annotation (Modern, Preferred)
+	-> Map java class to database table
+	-> Map fields to database table columns
+	
+	@Entity
+	@Table(name="student")
+	public class Student {
+		@Id
+		@Column(name = "id")
+		private int id;
+		
+		@Column(name="first_name") - column in database table
+		private String firstName; - maps to this field
+	}
+	
+	-> Java 9 and higher has removed java.xml.bind from its default classpath. That's why we get the class not found exception.  We have to explicitly add JAR files to the build path.
+	For Java 9 and higher, you need to additional JAR files.
+
+You need to download the following JAR files:
+
+javax.activation-1.2.0.jar
+jaxb-api-2.3.0.jar
+jaxb-core-2.3.0.jar
+jaxb-impl-2.3.0.jar
+
+Why we are using JPA Annotation instead of Hibernate ?
+
+For example, why we are not using this org.hibernate.annotations.Entity?
+JPA is a standard specification. Hibernate is an implementation of the JPA specification.
+
+Hibernate implements all of the JPA annotations.
+
+The Hibernate team recommends the use of JPA annotations as a best practice.
+
+<!– Drop and re-create the database schema on startup –>
+         <property name=”hbm2ddl.auto”>create</property> 
+
+Automatically validates or exports schema DDL to the database when the SessionFactory is created. With create-drop, the database schema will be dropped when the SessionFactory is closed explicitly.
+ // Create Session Factory Object  – using annotation configuration object
+        SessionFactory sessionFactory = new AnnotationConfiguration().configure().buildSessionFactory(); 
+   
+      //Create Session object from session factory object
+        Session session = sessionFactory.openSession();
+        session.beginTransaction();
+
+Saving java object
+	-> SessionFactory
+		-> Reads the hiberanteConfigFile
+		-> Create Session Objects
+		-> Heavy weight object
+		-> Only create once in app
+		->  if you are using multiple databases, then you would have to create multiple SessionFactory objects.
+	-> Session
+		-> Wraps a JDBC Connection
+		-> Main Object used to save/reterive objects
+		-> Short-lived object
+		-> Reterived from session factory
+		-> The session objects should not be kept open for a long time because they are not usually thread safe and they should be created and destroyed them as needed.
+		
+	-> Transaction Object
+		-> A Transaction represents a unit of work with the database and most of the RDBMS supports transaction functionality. Transactions in -> Hibernate are handled by an underlying transaction manager and transaction (from JDBC or JTA).
+
+This is an optional object and Hibernate applications may choose not to use this interface, instead managing transactions in their own application code.
+	-> SessionFactory factory = new Configuration().configure("hibernate.cfg.xml").addAnnotatedClass(Student.class).buildSessionFactroy();
+		->If file name is not given -> hibernate.cfg.xml is used by default
+	-> Session session = factory.getCurrentSession();
+	
+	try {
+	} catch() {
+	} finally {
+		factory.close();
+	}
+	try{
+		Student tempStudent = new Student("a",1,"b");
+		session.beginTransaction();
+		session.save(tempStudent);
+		session.getTransaction().commit();
+	} finally {
+		session.close();
+	}
+	
+->id not null AUTO_INCREMENT, PRIMARY_KEY(id) -> primary key in mysql
+@Id - tells that column is a primary key
+@GeneratedValue(Strategy=GenerationType.IDENTITY) - Mysql handle the generation of autoincrement
+GenerationType.AUTO - picks a appropariate strategry for particular database
+GenerationType.IDENTITY - Assign primary keys using database table identity
+GenerationType.SEQUENCE - Assign primary keys using database sequence
+GenerationType.TABLE - Assign primary keys using an underlying table to ensure uniqueness
+
+Can define custom generation strategy
+	-> Create implementation of org.hibernate.id.identifierGenerator
+	-> override public Serializable generate()
+
+Hibernate Query language
+	-> session.createQuery("from Student").getResultList();
+	-> session.createQuery("from Students where s.lastName='Doe'").getResultList(); -->Student is entity name and lastName is a variable of entity
+	-> session.createQuery("from Students where s.lastName='Doe' OR s.firstName='Daffy'").getResultList(); -->Student is entity name and lastName is a variable of entity
+
+If you are using Hibernate 5.2 or higher, then the Query list() method has been deprecated.
+In your code you should make the following update:
+Replace
+session.createQuery("from Student").list()
+With
+session.createQuery("from Student").getResultList()
+
+Update
+
+student = session.get(Student.class,studentId);
+student.setFirstName("vinod");
+session.commit();
+
+session.createQuery("update Student set email='' where id=''").executeUpdate();
+
+Delete
+
+student = session.get(Student.class,studentId);
+student.delete(student);
+session.getTransaction().commit();
+session.createQuery("delete from Student set where id=''").executeUpdate();
+
+
+@Temporal annotation
+	-> java annotation to store dates
+	@Column(name="date_of_birth")
+    @Temporal(TemporalType.DATE)    
+    private Date dateOfBirth;
+	
+Advance Mappings
+One-to-One -> One to One mapping between parent and child table
+ Cascade operations
+	->When we save parent it will save child also
+	-> When we delete it will delete the related record in child also
+Eager vs lazy loading
+	->Eager -> reterive everything -> When parent record is fethed -> fetch all child records
+	->Lazy -> reterieve on request
+Uni-Directional RelationShip
+	-> Load parent and then get child from parent
+Bi-Directional
+	->Get child from parent and also get parent from child
+	
+@OneToOne
+
+@Entity()
+@Table(name="instructor")
+public class Instructor { --Parent Entity Object
+	@OneToOne
+	@JoinColumn(name="instructor_detail_id")
+	private InstructorDetail instructiorDetail; -- Child entity object
+}
+
+Entity Life Cycle
+
+Detach -> if entity is detached, its not associated with hibernate session
+Merge -> If instance is detached from session, then merge will reattach to session
+Persist -> Transitions new instances to managed state. Next flush/commit will save to db
+Remove -> Transitions managed entity to be removed. Next flush/commit will delete from db
+Refresh -> Reload/synch object with data from db. Prevents stale data
+
+						New/Transient 
+							|	^
+							|	|
+					save/	|	|
+					presist	|	|rollback/new
+							|	|
+				refresh		V	|			  delete/remove			commit
+				-------	Persistent/Managed	--------------> Removed ---------> New/transient
+				|------>	|	|			<--------------			---------> Detached
+							|	^									rollback
+							|	|
+				commit/		|	|merge
+				rollback/	|	|
+				close		v	|
+						  Detached
+						
+Cascade Types
+
+PERSIST -> if entity is presisted, related entity also will be persisted
+REMOVE  -> if entity is removed, related entity also will be removed
+REFRESH -> if entity is refreshed, related entity also will be refreshed
+DETACH	-> if entity is detached, related entity also will be detached
+MERGE	-> if entity is merged, related entity also will be merged
+ALL		-> all of the above cascade types
+
+Configure cascade type
+@OneToOne(cascade=CascadeType.ALL) //by default no operations are cascaded
+
+Configure multiple cascade types
+@OneToOne(cascade={CascadeType.ALL,
+				   CascadeType.DETACH})
+				   
+Instructor instructor = new Instructor();
+InstructorDetail detail = new InstructorDetail();
+instructor.setInstructorDetail(detail);
+session.beginTransaction();
+session.save(instructor);//it saves instructor detail also since cascading type is all
+session.getTransaction().commit();
+
+//session factory with two annotated classes
+SessionFactory factory = new Configuration()
+						.configure("hibernate.cfg.xml")
+						.addAnnotatedClass(Instructor.class)
+						.addAnnotatedClass(InstructorDetail.class)
+						.buildSessionFactroy();
+
+Delete Entity
+	-> 
+	session.beginTransaction();
+	Instructor instructor = session.get(Instructor.class, id);
+	session.delete(instructor);//it delete instructor detail also since cascading type is all
+	session.getTransaction().commit();
+
+Bi-Directional
+	->We can load child table and get the parent with it
+	
+@Entity
+@Table(name="instructor_detail")
+public class InstructorDetail{
+
+@OneToOne(mappepBy="instructorDetail")
+private Instructor instructor; -- it refers to instructorDetail property in instructor class
+
+mappedBy
+	-> tells hibernate look at the instructorDetail property in Instructor class
+	-> use information from the Instructor @JoinColumn
+	-> To help find associated instructor
+	-> name given to mappedBy matches with the instance variable name in parent class
+@OneToOne(mappepBy="instructorDetail", cascade=CascadeType.ALL)
+
+Cascade delete
+	-> Delete parent on delete of child - CascadeType.ALL
+	-> Dont delete parent records on delete of chile - Dont use CascadeType.REMOVE
+	
+@OneToMany
+	->Parent can have many child records
+	Ex:- Instrcutor and Courses
+	
+	public class Course {
+		@ManyToOne
+		@JoinCoumn(name="instructor_id")
+		private Instructor instructor; -> Many courses to a one instrcutor id in Instructor entity
+		
+	}
+	
+	public class Instructor {
+		@OneToMany(mappedBy="instructor")
+		private List<Course> courses; -> refers to instructor property in Course class
+	}
+	
+	mappedBy tells
+		-> look at the insructor field in courses class
+		-> use the information from the Course class @JoinColumn
+		-> to help find associated courses for instructor
+
+in @JoinColumn we give the database column name which is foreignkey linked
+in mappedBy we give the entity variable name
+
+Fetch Types
+Eager vs Lazy
+	->Eage load will load all the dependent entities
+	-> Load Instructor and all of their courses at once
+Lazy 
+	-> load main entity firstName
+	-> load dependent entities on demand
+	
+	public class Instructor {
+		 @OneToMany(fetch=FetchType.LAZY, mappedby="instructor")
+		private List<Courses> courses;
+	}
+	
+Default fetch types
+@OneToOne - FecthType.Eager
+@OneToMany- FetchType.Lazy
+@ManyToOne- FetchType.Eager
+@ManyToMany- FetchType.LAZY
+
+lazy loading - session issue
+
+If session is closed before fetching the child entities
+-> get instructor
+-> session.getTransaction().commit();
+-> session.close();
+-> get courses from instructor -> will get error
+
+Solution -> call getCourses before closing the session
+-> get instructor
+-> get instructor.courses
+-> session.getTransaction().commit();
+-> session.close();
+-> get courses from instructor -> wont be error because it is already loaded into memory before session close
+
+HQL JOIN Fetch
+
+->session.createQuery("select i from Instructor i JOIN FETCH i.courses where i.id = :theInstructorId");
+->query.setParameter("theInstructorId", id);
+->query.getResultSet();
+
+-> We can load courses using separate session
+ // get courses for a given instructor
+            Query<Course> query = session.createQuery("select c from Course c "
+                                                    + "where c.instructor.id=:theInstructorId",    
+                                                    Course.class);
+            
+            query.setParameter("theInstructorId", theId);
+            
+            List<Course> tempCourses = query.getResultList();
+			
+@OneToMany - Unidirectional
+-> Course has reviews -> one course has many reviews -> Uni directional ->
+
+@Entity
+@Table(name="course")
+public class Course {
+	@OneToMany(cascade=CascadeType.ALL, fetch=Fecthtype.LAZY)
+	@JoinColumn(name="course_id")
+	private List<Reviews> reviews;
+}
+
+@JoinColumn
+	-> look at the course_id column in Review table
+	-> Use this information to find associated reviews for courses
+
+@Entity
+@Table(name="review")
+public class Review {
+	
+}
+
+Join COlumn -- Where to find the column
+The table in which it is found depends upon the context.
+
+- If the join is for a OneToOne or ManyToOne mapping using a foreign key mapping strategy, the foreign key column is in the table of the source entity or embeddable.
+
+- If the join is for a unidirectional OneToMany mapping using a foreign key mapping strategy, the foreign key is in the table of the target entity.
+
+- If the join is for a ManyToMany mapping or for a OneToOne or bidirectional ManyToOne/OneToMany mapping using a join table, the foreign key is in a join table.
+
+- If the join is for an element collection, the foreign key is in a collection table.
+
+--
+So as you can see, it depends on the context.
+In our training video, we are using @OneToMany uni-directional (course has one-to-many reviews).
+As a result, the join column / foreign key column is in the target entity. In this case, the target entity is the Review class. So, you will find the join column "course_id" in the "review" table.
+
+
+@ManyToMany
+Course table
+Student table
+Course_Student table contains the ManyToMany relationship between these tables
+
+
+@Entity
+@Table(name="coruse")
+public class Course {
+	@ManyToMany
+	@JoinTable(
+		name="course_student",
+		joinColumns=@JoinColumn(name="course_id"),
+		inverseJoinColumns=@JoinColumn(name="student_id")
+	)
+	private List<Student> students;
+}
+
+@JoinTable
+	-> look at course_id column in course_student table
+	-> For other side(inverse) look at student_id column in course_student table
+	-> use this information to find the relationship between course and students
+	-> inverse is other side of relationship
+	
+Spring WebMVC
+Connection Pool setup
+1.<bean id="myDataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-menthod="close">
+	<property name="driverClass" value="com.mysql.jdbc.Driver"/>
+	...name="jdbcURL"
+	...name="user"
+	...name="password"
+	...name="minPoolSize"
+	...name="maxPoolSize"
+	...name="maxIdleTime"
+	/>
+2. setup Session factory
+	<bean id="sessionFactory" class="org.springFramework.orm.hibernate5.LocalSessionFactoryBean">
+	
+	<property name="dataSource" ref="myDataSource"/>
+	<property name="packagesToScan" value=""/>
+	<property name="hibernateProperties">
+		<props>
+			<prop key="hibernate.dialect"> org.hibernate.dialect.MySQLDialect </prop>
+			<prop key="hibernate.show_sql"> true </prop>
+		</props>
+	</property>
+3. setup Transaction Manager
+	<bean id="myTransactionManager" class="org.springFramework.orm.hibernate5.HibernateTransactionManager">
+		<property name="sessionfactory" ref="sessionFactory"/>
+	</bean>
+4. enable configuration of transcational annotations
+	<tx:annotation:driven transaction-manager="myTransactionManager"/>
+	
+Browser ----> Controller ------> DAO -------> Database Object
+
+DAO --> interface with database
+DAO needs session factory
+session factory needs datasource
+
+So we autowire sessionfactory into DAO
+
+interface CustomerDAO {
+	List<Customers> getCustomers();
+}
+
+public class CustomerDAOImpl implements CustomerDAO {
+	@Autowired
+	private SessionFactory  sessionFactory;
+	public List<Customers> getCustomers() {
+	}
+}
+
+@Transactional annotation -> Automatically begins transaction and end transaction for Hibernate code
+						-> No need to do session.beginTransaction() and session.getTransction().commit();
+
+public class CustomerDAOImpl implements CustomerDAO {
+	@Autowired
+	private SessionFactory  sessionFactory;
+	@Transactional
+	public List<Customers> getCustomers() {
+		Session session = sessionFactory.getCurrentSession();
+		Query query = session.createQuery("from Customer", customer.class);
+		retuen query.getResultList();
+	}
+}
+
+Specializes Annotations for DAOs
+
+@Repository -> for DAO implenetations . Its a subclass for @Component. ->Automatically register DAO implementation with Spring
+			-> provides translations for any unchecked JDBC exceptions
+
+@Repository
+public class CustomerDAOImpl implements CustomerDAO {
+	@Autowired
+	private SessionFactory  sessionFactory;
+	@Transactional
+	public List<Customers> getCustomers() {
+		Session session = sessionFactory.getCurrentSession();
+		Query query = session.createQuery("from Customer", customer.class);
+		retuen query.getResultList();
+	}
+}
+
+Next -> inject DAO into Controller using @Autowired
+
+iterate the list from Model in jsp using c:forEach
+
+<c:forEach var="tempCustomer" items="${customers}">
+	${tempCustomer.customername}
+</c:forEach>
+
+Service Layer
+-> between controller and DAO
+-> Service Facede design pattern
+-> Intermediate layer for custom Business Logic
+-> Integerate Data from multiple sources
+
+Ex:- Customer Service ----> Customer DAO
+					  ----> Sales DAO
+
+@Service -> applies to service implemetation. It is a subclass of Component
+		 -> It will be automatically scanned and registered
+Inject DAO into Service
+Add @Transctional to service class methods
+
+Question
+
+Can you show an example of Service calling Multiple DAOs? as I don't really understand or fully grasp the idea...
+
+
+Answer
+
+Multiple Data Sources in Spring
+This project shows how to configure multiple datasources in Spring.
+In this project, we connect to two different databases: web_customer_tracker and employee_directory
+The application uses the following architecture
+
+                                                    /---- EmployeeDAO
+        DemoController -> MultiDataSourceService ---
+                                                    \---- CustomerDAO
+
+The complete source code for the project is available for download.
+
+The project the data source configurations in the config file: spring-mvc-crud-demo-servlet.xml
+This file defines two datasources. One datasource for customerDataSource and another for employeeDataSource.
+For each datasource defined, you need to add
+- session factory
+- transaction manager
+- tx:annotation driven
+
+3. Java DAO code
+
+The project includes DAOs for Customer and Employee. Make note of the @Autowired for the respective session factory. Also make note of the use of @Transactional with the name the of appropriate bean.
+
+
+Hibernate Cache
+	- 3 levels
+
+First Level Cache in Hibernate Important Points
+Important Points about First level cache in Hibernate that can be derived from above program are:
+
+-> Hibernate First Level cache is enabled by default, there are no configurations needed for this.
+-> Hibernate first level cache is session specific, that’s why when we are getting the same data in same session there is no query fired whereas in other session query is fired to load the data.
+-> Hibernate first level cache can have old values, as you can see above that I have put my program to sleep for 10 seconds and in that time I updated the value (name from Pankaj to PankajK) in database but it didn’t get reflected in the same session. But in other session, we got the updated value.
+-> We can use session evict() method to remove a single object from the hibernate first level cache.
+-> We can use session clear() method to clear the cache i.e delete all the objects from the cache.
+-> We can use session contains() method to check if an object is present in the hibernate cache or not, if the object is found in cache, it returns true or else it returns false.
+-> Since hibernate cache all the objects into session first level cache, while running bulk queries or batch updates it’s necessary to clear the cache at certain intervals to avoid memory issues.
+
+Hibernate has the concept of first-level cache. 
+It is a session scoped cache which ensures that each entity instance is loaded only once in the persistent context.
+Once the session is closed, first-level cache is terminated as well. This is actually desirable, as it allows for concurrent sessions to work with entity instances in isolation from each other.
+
+second-level cache is SessionFactory-scoped, meaning it is shared by all sessions created with the same session factory. 
+When an entity instance is looked up by its id (either by application logic or by Hibernate internally, e.g. when it loads associations to that entity from other entities), and if second-level caching is enabled for that entity, the following happens:
+
+-> If an instance is already present in the first-level cache, it is returned from there
+-> If an instance is not found in the first-level cache, and the corresponding instance state is cached in the second-level cache, then the data is fetched from there and an instance is assembled and returned
+-> Otherwise, the necessary data are loaded from the database and an instance is assembled and returned
+-> Once the instance is stored in the persistence context (first-level cache), it is returned from there in all subsequent calls within the same session until the session is closed or the instance is manually evicted from the persistence context. Also, the loaded instance state is stored in L2 cache if it was not there already.
+
+Hibernate second-level caching is designed to be unaware of the actual cache provider used. Hibernate only needs to be provided with an implementation of the org.hibernate.cache.spi.RegionFactory interface which encapsulates all details specific to actual cache providers. Basically, it acts as a bridge between Hibernate and cache providers.
+
+In this article we use Ehcache as a cache provider, which is a mature and widely used cache. You can pick any other provider of course, as long as there is an implementation of a RegionFactory for it.
+
+We add the Ehcache region factory implementation to the classpath with the following Maven dependency:
+
+<dependency>
+    <groupId>org.hibernate</groupId>
+    <artifactId>hibernate-ehcache</artifactId>
+    <version>5.2.2.Final</version>
+</dependency>
+
+With the following two properties we tell Hibernate that L2 caching is enabled and we give it the name of the region factory class:
+
+hibernate.cache.use_second_level_cache=true
+hibernate.cache.region.factory_class=org.hibernate.cache.ehcache.EhCacheRegionFactory
+For example, in persistence.xml it would look like:
+
+<properties>
+    ...
+    <property name="hibernate.cache.use_second_level_cache" value="true"/>
+    <property name="hibernate.cache.region.factory_class" 
+      value="org.hibernate.cache.ehcache.EhCacheRegionFactory"/>
+    ...
+</properties>
+To disable second-level caching (for debugging purposes for example), just set hibernate.cache.use_second_level_cache property to false.
+
+In order to make an entity eligible for second-level caching, we annotate it with Hibernate specific @org.hibernate.annotations.Cache annotation and specify a cache concurrency strategy.
+
+Some developers consider that it is a good convention to add the standard @javax.persistence.Cacheable annotation as well (although not required by Hibernate), so an entity class implementation might look like this:
+
+@Entity
+@Cacheable
+@org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+public class Foo {
+}
+
+Hibernate will use a separate cache region to store state of instances for that class. The region name is the fully qualified class name.
+
+For example, Foo instances are stored in a cache named com.baeldung.hibernate.cache.model.Foo in Ehcache.
+
+cache concurrency strategies:
+
+READ_ONLY: Used only for entities that never change (exception is thrown if an attempt to update such an entity is made). It is very simple and performant. Very suitable for some static reference data that don't change
+NONSTRICT_READ_WRITE: Cache is updated after a transaction that changed the affected data has been committed. Thus, strong consistency is not guaranteed and there is a small time window (modification of data - commiting of data) in which stale data may be obtained from cache. This kind of strategy is suitable for use cases that can tolerate eventual consistency
+READ_WRITE: This strategy guarantees strong consistency which it achieves by using ‘soft' locks: When a cached entity is updated, a soft lock is stored in the cache for that entity as well, which is released after the transaction is committed. All concurrent transactions that access soft-locked entries will fetch the corresponding data directly from database
+TRANSACTIONAL: Cache changes are done in distributed XA transactions. A change in a cached entity is either committed or rolled back in both database and cache in the same XA transaction
+
+
+Cache Management
+If expiration and eviction policies are not defined, the cache could grow indefinitely and eventually consume all of available memory. In most cases, Hibernate leaves cache management duties like these to cache providers, as they are indeed specific to each cache implementation.
+
+For example, we could define the following Ehcache configuration to limit the maximum number of cached Foo instances to 1000:
+
+<ehcache>
+    <cache name="com.baeldung.persistence.model.Foo" maxElementsInMemory="1000" />
+</ehcache>
+
+Collection Cache
+
+Collections are not cached by default, and we need to explicitly mark them as cacheable. For example:
+
+@Entity
+@Cacheable
+@org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+public class Foo {
+
+    ...
+
+    @Cacheable
+    @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+    @OneToMany
+    private Collection<Bar> bars;
+
+    // getters and setters
+}
+
+
+Internal Representation of Cached State
+Entities are not stored in second-level cache as Java instances, but rather in their disassembled (hydrated) state:
+
+Id (primary key) is not stored (it is stored as part of the cache key)
+Transient properties are not stored
+Collections are not stored (see below for more details)
+Non-association property values are stored in their original form
+Only id (foreign key) is stored for ToOne associations
+
+
+Cache Invalidation for HQL DML-Style Queries and Native Queries
+When it comes to DML-style HQL (insert, update and delete HQL statements), Hibernate is able to determine which entities are affected by such operations:
+
+entityManager.createQuery("update Foo set … where …").executeUpdate();
+In this case all Foo instances are evicted from L2 cache, while other cached content remains unchanged.
+
+
+However, when it comes to native SQL DML statements, Hibernate cannot guess what is being updated, so it invalidates the entire second level cache:
+
+session.createNativeQuery("update FOO set … where …").executeUpdate();
+This is probably not what you want! The solution is to tell Hibernate which entities are affected by native DML statements, so that it can evict only entries related to Foo entities:
+
+Query nativeQuery = entityManager.createNativeQuery("update FOO set ... where ...");
+nativeQuery.unwrap(org.hibernate.SQLQuery.class).addSynchronizedEntityClass(Foo.class);
+nativeQuery.executeUpdate();
+
+
+Query Cache
+Results of HQL queries can also be cached. This is useful if you frequently execute a query on entities that rarely change.
+
+To enable query cache, set the value of hibernate.cache.use_query_cache property to true:
+
+hibernate.cache.use_query_cache=true
+Then, for each query you have to explicitly indicate that the query is cacheable (via an org.hibernate.cacheable query hint):
+
+entityManager.createQuery("select f from Foo f")
+  .setHint("org.hibernate.cacheable", true)
+  .getResultList();
+  
+Pessimistic Locking
+
+There are two types of locks we can retain: an exclusive lock and a shared lock. We could read but not write in data when someone else holds a shared lock. In order to modify or delete the reserved data, we need to have an exclusive lock.
+We can acquire exclusive locks using ‘SELECT … FOR UPDATE‘ statements
+
+Lock Modes
+JPA specification defines three pessimistic lock modes which we're going to discuss:
+
+PESSIMISTIC_READ – allows us to obtain a shared lock and prevent the data from being updated or deleted
+PESSIMISTIC_WRITE – allows us to obtain an exclusive lock and prevent the data from being read, updated or deleted
+PESSIMISTIC_FORCE_INCREMENT – works like PESSIMISTIC_WRITE and it additionally increments a version attribute of a versioned entity
+All of them are static members of the LockModeType class and allow transactions to obtain a database lock. They all are retained until the transaction commits or rolls back.
+
+PESSIMISTIC_READ
+Whenever we want to just read data and don't encounter dirty reads, we could use PESSIMISTIC_READ (shared lock). We won't be able to make any updates or deletes though.
+
+PESSIMISTIC_WRITE
+Any transaction that needs to acquire a lock on data and make changes to it should obtain the PESSIMISTIC_WRITE lock. According to the JPA specification, holding PESSIMISTIC_WRITE lock will prevent other transactions from reading, updating or deleting the data
+
+PESSIMISTIC_FORCE_INCREMENT
+This lock works similarly to PESSIMISTIC_WRITE, but it was introduced to cooperate with versioned entities – entities which have an attribute annotated with @Version.
+Any updates of versioned entities could be preceded with obtaining the PESSIMISTIC_FORCE_INCREMENT lock. Acquiring that lock results in updating the version column.
+
+Find
+It's probably the most straightforward way. It's enough to pass a LockModeType object as a parameter to the find method:
+
+entityManager.find(Student.class, studentId, LockModeType.PESSIMISTIC_READ);
+
+
+Query
+Additionally, we can use a Query object as well and call the setLockMode setter with a lock mode as a parameter:
+
+Query query = entityManager.createQuery("from Student where studentId = :studentId");
+query.setParameter("studentId", studentId);
+query.setLockMode(LockModeType.PESSIMISTIC_WRITE);
+query.getResultList()
+
+ Explicit Locking
+It's also possible to lock manually the results retrieved by the find method:
+
+Student resultStudent = entityManager.find(Student.class, studentId);
+entityManager.lock(resultStudent, LockModeType.PESSIMISTIC_WRITE);
+
+NamedQuery
+@NamedQuery annotation allows us to set a lock mode as well:
+
+@NamedQuery(name="lockStudent",
+  query="SELECT s FROM Student s WHERE s.id LIKE :studentId",
+  lockMode = PESSIMISTIC_READ)
+  
+  
+****************************************************
+Bacth Updates
+
+Default Behaviour
+Hibernate doesn't enable batching by default. This means that it'll send a separate SQL statement for each insert/update operation:
+
+@Transactional
+@Test
+public void whenNotConfigured_ThenSendsInsertsSeparately() {
+    for (int i = 0; i < 10; i++) {
+        School school = createSchool(i);
+        entityManager.persist(school);
+    }
+    entityManager.flush();
+}
+
+Hence we should configure Hibernate to enable batching. For this purpose, we should set hibernate.jdbc.batch_size property to a number bigger than 0.
+If we're using Spring Boot, we can define it as an application property:
+
+spring.jpa.properties.hibernate.jdbc.batch_size=5
+
+*****************************************************************************

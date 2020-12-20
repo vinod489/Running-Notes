@@ -1,0 +1,327 @@
+JAVA Performance
+
+JVM
+ - Java file is compiled by compiler into byte code
+ - Byte code run by JVM - JVM interprets byte code
+ - Byte code can be run in any os which has JVM
+ - Any propramming language which can be compiled to JVM compatiable bytecode can be run on JVM
+ 
+Just in time compilation
+- langiage like C compile to a machine understandble langiage which can be run directly by OS no need of any interpretation
+- But we lose write once run anywhere
+- To interpet the line by line bytecode it will take sometime
+- While interpreting byte code JIT identifies the frequently executing method or a code block and it will be directly compiled into a native language
+  to speed up the process of execution. This will be done by a separate thread in JVM. JVM is a multi threaded applicaion.
+- To identify which code runs faster we also have to know when it is running
+	- When the code runs for the first time it may take time for git compilation to native code
+	- When the code runs for the second time it will run faster since it is already interpreted
+- There is a clear transparency on which code will be compiled to a native language
+
+-XX:+PrintCompilation 
+	- Gives details about compilation for each method
+	- First line indicates number of seconds it took
+	- n indicates natively compiled, % indicates code compiled and running in code cache, s - indicates method is not optimally compiled
+	- numbers indicate level of compilation
+
+Two compilers built in JVM
+Cl and C2
+C1 - do 3 levels of compiling and C2 - do 4th level
+if code is used too much it will be compiled by C2 for 4th level compiling and also keep that code in code cache for easy access
+
+-XX:+UnlockDiagnosticVMOptions -XX:+LogCompilation - To log the compilation levels to a file
+JVM Code Cache is an area where JVM stores its bytecode compiled into native code
+VM Warning: Code cache is full. Compiler has been disabled - Means code cache is full and compiler cannot do 4th level compilation to compile into noative code and move to code cache. In this case if code cache is increased performance of application may increase. And in other way all the code cache is being used and there is no chance to clean up. Means application is not running optimally
+
+-XX:+PrintCodeCache - displays the current code cache and code cache being used
+Maximum of code cace size depends on java version.. below java 7 it is 32mb for 32 bit and 48mb for 64 bit.. for java 8 and above it is 240mb
+
+Code cache can be set by 3 flags
+-XX:InitialCodeCacheSize - Its the initial code cache size allocated after JVM starts - it will be like 160mb
+-XX:ReservedCodeCacheSize - Its the maximum size that code cache can grow upto
+-XX:CodeCacheExpansionSize - How quickly code cache can grow. How much size that code cache can grow after code cache is full
+We can monitor code cache using Jconsole also.
+
+JVM has two built in compilers called C1 and C2 and compilation levels C1 (1-3 levels) and C2(4 level)
+
+32 bit												64 bit
+might be faster if heap<3gb
+-- each pointer to be object memory is smaller		necessary if heap>4gb
+-- in 32 bit so manipulating pointers is easy		Might be faster if used long/double
+Max heap size = 4gb									Max heap size is OS dependent
+only one compiler avaiable.C1 Compiler				C1 and C2 compilers,C1- client compiler and C2- Server compiler
+application which is short lived is always			Application long lived - Sever
+being in C1 compiler - client compiler
+small app startup time should be faster				Startup time is not important
+startup time is important
+
+Which compiler : flag -client/-server 32 bit sever compiler/-d64 server compiler
+
+-XX:-TieredCompilation - tells JVM to turnoff compiling and run only in interpreted mode - good for a very small logic
+
+native compilation tuning - Tell to JVM after how many times of usage method should be natively compiled
+
+XX:+PrintFlagsFinal - prints all the JVM parameters flags
+CICompilerCount - gives the number of threads for compiler
+jps - gives process ids of running jvms
+jinfo -flag CICompilerCount <pid> - gives the value of CICompilerCount - -XX:CICompilerCount
+
+increasing the number of compiler threads may imporve the performance
+-XX:CompileThreshold - this is the number of times method has to run 
+reducing this value may improve the performance
+
+JAVA Memory- Stack and Heap and metaspace
+
+Stack -> Every thread has its own stack. java knows exactly when stack should be destroyed
+		 Frist in last out datastructure. used for local primitives and the reference of object 
+
+Heap -> Store complex objects. Shared to all threads. objects are stored
+
+byref -> visual basic keyword to pass value by reference
+
+final keyword -> final variables cannot be changed
+final Customer c = new Customer("Vinod"); -->Variable can be assigned only once
+final Customer c;
+c=new Customer("Vinod"); //compiles
+c=new Customer("Kumar"); //Compile error
+c.setName("Kumar"); //Compiles -> Object properties/state can be changed only the refrence cannot be changed
+
+ConstCorrectness -> Make object properties non changable -> not avaiable in java
+
+Escaping References -
+
+Problem - Encapsulation is a way of protecting the class fields from outside of the class.
+		- So we make the class fields private and provide getter and setters
+		- So for example if we have to Collection as class field and provide getter and setter
+		- In the getter method if we return collection - Means we are returning the reference of actual collection
+		- So in the caller code the returned collection can be changed by using the reference which effects the original collection
+		- means collection can be changed outisde of class without calling setter method
+		- This avoids encapsulation and also hard to debug
+		
+		Ex:- public class CustomerRecords {
+			private Map<Stirng, Customer> records;
+			public void set(Customer c) {
+				this.records.put(c.getName(), c);
+			}
+			public Map<Stirng, Customer> getRecords() {
+				return this.records; //returning the reference of original collection
+			}
+
+Solution - 
+
+1. return the iterator of collection
+Ex:- public Iterator<Customer> iterator() {
+		// TODO Auto-generated method stub
+		return this.records.values().iterator();
+	}
+	
+Still there is problem with mutating collection - we can modify the collection using iterator.
+--No performance impact 
+
+2. Duplicating collections
+
+Ex:- 		
+	public Map<String, Customer> getCustomers() {
+		return new HashMap<>(this.records);
+	}
+	
+Here we are creating new collection and returning that
+But new collection contains the objects which has the same reference of original collection
+
+collection 1 ---->   ----------
+					| Obj1 ref | ------> Obj1	<---------
+					| Obj2 ref | ------> Obj2	<-----	|
+					-----------						 |	|	
+collection2 --->	----------						 |	|	
+					| Obj1 ref | --------------------|--|		
+					| Obj2 ref | ------> Obj2--------|
+					-----------
+					
+Performance impact -> we are creating new collection - we are copying the pointers of object into new collection
+--Memory needed for storing pointers
+
+3. immutable collections
+	//immutable collection
+	public Map<String, Customer> getCustomers3() {
+		//return Collections.unmodifiableMap(records);
+		return Map.copyOf(records);//java 10.//if other collection is unmodifiable it wont create new collection. it will just return original one
+		//slight performance improvement
+	}
+	
+	collection returned from this method cant be modified -- we get UnsupportedOperationException when try to modify
+	
+4. duplicating objects
+
+public Customer getCustomer(String name) {
+		return this.records.get(name); //this again escaping reference -- returning the reference of underlying object
+		//so using this object we can change again customer object
+	}
+solution is to retun read only copy of Customer
+
+create a constuctor to create a new object
+public Customer(Customer c) {
+		this.name = c.getName();
+	}
+	
+	public Customer getCustomer(String name) {
+		return new Customer(records.get(name));
+	}
+	
+5. Using interfaces to create immutable objetcs
+
+Create ReadOnlyCustomer with only getter methods
+
+
+public interface ReadOnlyCustomer {
+
+	String getName();
+
+	String toString();
+
+}
+
+And return ReadOnlyCustomer instead of Customer
+public ReadOnlyCustomer getCustomer(String name) {
+		return new Customer(records.get(name));
+	}
+	
+As there is no setter method in ReadOnlyCustomer we cant call setter method on it
+
+Still we can cast ReadOnlyCustomer to Customer and call setter method. this will be avoided by returning a duplicate collection
+
+6. Using Modules to hide the implementation //java11
+
+Create module and export only ReadOnlyCustomer, CustomerRecords but dont export Customer class
+As Customer class is not accessible outside of module.. customer objects can be iteratable using ReadOnlyCustomer only
+-- And cant call setter methods on it
+-- And cant call setter methods on it
+
+The Metaspace
+ 
+ Metaspace contains the metadata
+  - Which methods compiled to byte code and which methods compiled to native code
+  - Static primitives and static objects
+  - Any objects on heap which has reference in metaspace never going to garbage collected
+  - All threads have access to metaspace - So any static variables are accessible to all threads
+ 
+The Permgen
+	 - It was removed from java8
+	 - No more OutOfMemoryPermGen
+	 
+Objects created in heap can be shared among methods - thats why objects will be always created on heap
+There is no choice of creating object in other than heap
+If there any object which is created in a code block and can be freed up at the end of block can be created in stack - Modern VMs
+
+String Pool
+
+String s1= "hello";
+		String s2 ="hello";
+		System.out.println(s1.equals(s2));//true
+		System.out.println(s1==s2);//true
+		
+		Integer i = 79;
+		String s3 = i.toString();
+
+		String s4 = "79";
+		
+		System.out.println(s3.equals(s4));//true
+		System.out.println(s3==s4);//false//String s3 is not placed in pool because it is not created using literal
+		
+Intern
+		String s3 = i.toString().intern();//reduces number of objects to be created and number of objects to grabage collected
+
+		String s4 = "79";
+		
+		System.out.println(s3.equals(s4));//true
+		System.out.println(s3==s4);//true
+
+Before java 7 - String pool lives in premgen
+from java 7 - Strign pool lives in heap 
+
+How String Pool is implemented
+
+StringPool is implemented using HashMaps
+
+When a String is placed in a String pool - hashcode is calculated for that string and placed in a bucket
+Instead of checking the entire string pool for a string whether it exists or not.. check the hashcode and check directly in bucket
+A Standard HashMap starts with 16 buckets
+If buckets are small - Number of strings in each bucket will be more - To check whether sting exists in bucket will take more time
+If buckets are more - 
+
+-XX:+PrintStringTableStatistics - Gives the details about string pool hashmap
+-XX:StringTableSize = change string pool buckets
+
+java -XX:+UnlockDiagnosticVMOptions -XX:+PrintFlagsFinal
+
+-XX:InitialHeapSize/-Xms and  -XX:MaxheapSize/-Xmx
+
+Garbage Collection 
+Objects created in heap whicha re not having reference from stack are eligible for grabage collection
+System.gc() -> is to run grabacge collection. But its just like telling VM to run gc but its not command. its just a hint or suggestion to VM
+
+Java 11 garbage collection - After gc run, JVM gives the unused memory back to operating system. But it wont go below the initial heap size
+But there is a some disadvantage with this that it when memory is needed there is a slight impact on performance for requesting the required memory
+
+finalize() ->
+
+soft leak -->
+When an object is referenced even when no longer needed-- something referenced from a third party software
+
+Garbage Collection - Mark&Sweep Algorithm
+
+While doing Marking - All the appication threads will be paused and checked for the obejcts which are referenced - means which are not eligibe for garabage collection and mark them 
+
+If all the objects dont have reference marking process is pretty much speed because there is nothing to mark so that entire heap can be dispose of
+
+Heap is divided into two generations - Young and old
+Young generation is too small. objects are initially created in young generation. GC runs on young generation is called minor collection and its very speed. When the object survives the young generation it reaches old generation . GC runs on old generation when it is full.
+
+Young generaation is split into 3 sections
+Eden,s0,s1
+
+When Eden space full -> GC takes in Eden and any surviving objects move to s0
+When eden gets full -> Next GC runs both on Eden and S0 -> Survivng objects to S1 -> Now eden & s0 becomes empty
+When eden gets full -> Next GC runs both on Eden and S1 -> Survivng objects to S0 -> Now eden & s1 becomes empty
+When a object moved from s0 to s1 or viceversa -> its a one generation age old
+
+
+-XX:NewRatio - How many times old generation has to be bigger than new generation
+-XX:-UseAdaptiveSizePolicy - 
+
+-XX:SurvivorRatio = n -> S0 and S1 space ratio with eden space. JVM may choose most optimal value even we specify
+-XX:MaxTenuringThreshold = n ->
+ 
+Grabage Collector - Serial, - entire application theads will be hold, single threaded -XX:+UseSerialGC
+					Parallel, - Performing on minor generations -XX:+UseParallelGC
+					Mostly Concurrent - 
+					
+How Lists Works
+	- ArrayList - It creates a empty array with size 10 in a run time memory.
+				  When a 11th element is added, a big array is created in memory and elements is copied into new array and make old array available for garbage collection. Everytme it resizes it grows by half of original size. Maximum size of arraylist can grow
+				  upto Integer.Maxvalue - 8;
+	- CopyOnWriteArrayList - A thread safe version of ArrayList- Its costly - When changed a copy of list is created 
+	- LinkedList -
+	- AttributeList -
+	- RoleList
+	- RoleUnresolvedList
+	- Stack
+	- Vector
+ArrayList vs LinkedList - iteration - Same for ArrayList and LinkedList
+						- get - Fast in ArrayList, In case of Linked List it should be iterated from starting
+						- remove - if it is middle element linkedlist, or if it is last element - arraylist is fasr
+						- add - LinkedList is fast as it is just updating the address pointers, In case of arraylist- we have to iterate
+						- sort - both use Arrays.sort - In case of linked list it has to be converted to array so little bit slow
+
+How Maps Works
+	- HashMap - Initally an array is created with 16 items
+			  - java converts the key into integer value - modules of that number by size of map(%16) - Ex:- key is 124 - 126%16 = 12
+			  - Key and value pair will be store in the calculated bucket value
+			  - When key is string type - Hashcode will be calculated 
+			  - When a same hash code is for two keys..two objects will be stored in that bucket
+			  - Bucket actually a linked list - All the objects are added in the form of linked list - a new object will be added at the end of linked list
+			  - While reterving bucket location can be calculated by using hashcode and comparing the key by travessing the linked list
+			  - When a HashMap full of 3 quarters its size will be doubled
+			  - When HashMap size is changed all the items will be reevaluated because size will be changed and a new bucket number has to be calcualted again
+			  - Checking a element in array is easier than in a linkedlist - So a maximum sized hashmap is better to have
+			  - If hashcode is same for multiple keys then linkedlist grows big and buckets will be empty and poor performance
+			  - Optimal Performance - Length of map should be more and lenght of linked list should be small
+			  - Linked list size will be small when hashcode and equals method returns unique for each element

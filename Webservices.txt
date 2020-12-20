@@ -1,0 +1,12 @@
+JAVA WEBSERVICES
+
+1. CORBA - Common Object Request Broker Architecture - Interface definition language - CORBA compiler compiles IDL file and generates language specific object
+-To expose generated object programmer has to write business logic - Deployed on MOM - Message oriented middle ware nothing but CORBA server- THis need license
+
+2. RMI - Remote method invocation - Allows java object to be exposed to server - Starts with POJO class - RMI Compiler generates abstractions to expose over the network - It has to be deployed on RMI server which is packed with JDK - Which is open source and light weight - it is just a registry holding the object of it - Apart from it, it wont provide any infrastructural services like securtiy,connection pooling etc.
+
+3. EJB- Enterprise java bean - Managed object came into picture- Java object acts a EJB deployed on Managed server - It has inbuilt infrastructure services like securtiy, auditing, connection pooling - All these will be maintianed by EJB container itself - When exposed over the network, the other programs which wants to access the EJB should also be java applications
+
+4. Web services - Which are platform independent and language independent - Build interoperable distributed programs using webservices
+
+

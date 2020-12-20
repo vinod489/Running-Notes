@@ -1,0 +1,264 @@
+Spring REST
+
+	-> Problem - Build a client app display weather 
+		-> weather will be from other external service
+	-> How to connect to other external service
+		-> what is the format of response
+		-> Which language to use
+	-> we can make REST APIS calls over HTTP -> REST is a light weight and can be made over HTTP
+		-> REST is language indenpendent
+	-> REST commonly uses JSON or XML
+
+www.programmableweb.com -> repository for rest APIS
+
+JSON Data Binding
+	-> 	Data binding is the procession of converting JSON to java POJO
+	-> Jackson API automatically converts string to java POJO
+	-> Spring uses jackson project behind the scenes
+	-> jackson handles databing between JSON and Java POJO
+	-> Package - com.fasterxml.jackson.databind
+	-> jackson-databind -> maven dependency
+	-> by default jackson calls setter and getter of pojo -> it doesnt access any private fields
+	-> ObjectMapper mapper = new ObjectMapper(); -> ObjectMapper is from jackson
+		->mapper.readValue(new File("/file.json"), Student.class); -> converts json to Student POJO
+	-> ObjectMapper mapper = new ObjectMapper();
+		->mapper.enable(SerializationFeature.INDENT_OUTPUT); -->for pretty printing
+		->mapper.writeValue(new File("/file.json"), student); -> converts pojo to json
+	-> Spring will automatically handle Jackson Integeration
+	-> JSON data being passed to REST controller automatically conver to POJO
+	-> Java object returned from REST controller automatically converts to JSON
+	
+	-> Ignore Properties
+		-> When a new property is added to json file but not available in POJO we will get unrecongnizedproperty exception
+		-> @JsonIgnoreProperties(IgnoreUnknown=true) -> this annotation should be given to POJO class -> this will ignore the unknown properties
+		
+HTTP Methods
+	-> POST -> create a new entity
+	-> GET -> get list of entities
+	-> PUT -> Update an existing entity
+	-> DELETE -> Delete an existing entity
+HTTP Rquest
+	-> Request Line -> HTTP command
+	-> Header Variables -> request Metadata
+	-> Message Body -> Contents of message
+HTTP Response
+	-> Response line -> status code 
+	-> Header variables -> response metadata -> like contetns, size of data, cache
+	-> Message body -> contents of response
+	-> Status codes
+		-> 100 - 199 = informational
+		-> 200 - 299 = success
+		-> 300 - 399 = redirection
+		-> 400 - 499 = client error -> 401-Authentication required/404-filenotfound error
+		-> 500 - 599 = server error -> 500- internal server error
+	-> MIME content types
+		-> Mutlipurpose internet mail extension
+		-> ex:- text/html, text/plain, application/xml -> based on this browser render content
+	-> tools to send HTTP rest requests -> curl,postman
+	
+Spring Web MVC provides support for REST
+	-> @Restcontroller -> extension of @controller
+	-> Handles REST requests and responses
+	-> As long as jackson is in classpath -> JSON automatically convert to POJO and viceversa
+
+	-> spring-webmvc, jackson-databind, javax.servlet-api for spring dispatcher servlet-api
+	
+	@Configuration
+	@EnableWebMvc
+	@ComponentScan(basePackages="")
+	public class DemoConfig {
+	}
+	
+	WebAppInitializer
+	public class myWebAppInitializer extends AbstractAnnotationConfigDispatchServletInitializer {
+		@Override
+		getServletConfigClasses()
+		
+		@Override
+		getServletMappings()
+	}
+	
+@PathVariable
+	-> GET -> api/students/{studentid} -> pathvariable
+	-> @PathVariable -> bind path variable to method parameter
+	-Ex:- 
+	@RestController
+	@RequestMapping("/api")
+	public class StudentRestController {
+		@GetMapping("/students/{studentId}")
+		public List<Student> getStudents(@PathVariable int studentId) { -->studentId name must match with {studentId}
+		}
+	}
+	
+Exception Handling
+	-> Custom Error
+		public class StudentErrorResponse {
+			private int status;
+			private String message;
+			private long timestamp;
+		}
+	-> Custom Student Exception
+		public class StudentNotFoundException extends RunTimeException {
+			public StudentNotFoundException(String message) {
+				super(message); //call super class constructor
+			}
+		}
+	-> throw exception
+	@RestController
+	@RequestMapping("/api")
+	public class StudentRestController {
+		@GetMapping("/students/{studentId}")
+		public List<Student> getStudents(@PathVariable int studentId) { -->studentId name must match with {studentId}
+			Student student = studentService.getStudent(studentId);
+			if(student != null) {
+				thow new StudentNotFoundException("student not found -- "+studentId);
+			}
+		}
+	}
+	
+	-> Add Exception handler
+		-> Define Exception handler methods with @ExceptionHandler annotation
+		-> Exception Handler will return a response entity
+		-> ResponseEntity is a wrapper of HTTP Response object
+		-> ResponseEntity provides a fine grained control to specify
+			-> HTTP Status code, HTTP headers and Response body
+		@RestController
+		@RequestMapping("/api")
+		public class StudentRestController {
+			@GetMapping("/students/{studentId}")
+			public List<Student> getStudents(@PathVariable int studentId) { -->studentId name must match with {studentId}
+				Student student = studentService.getStudent(studentId);
+				if(student != null) {
+					thow new StudentNotFoundException("student not found -- "+studentId);
+				}
+			}
+			
+			@ExceptionHandler
+			public ResponseEntity<StudentErrorResponse> handleException(StudentNotFoundException exec) {
+				StudentErrorResponse studentErrorResponse = new StudentErrorResponse();
+				studentErrorResponse.setStatus(HttpStatus.NOT_FOUND.value());
+				studentErrorResponse.setMessage(exec.getMessage());
+				studentErrorResponse.setTimestamp(System.currentTimeMillis);
+				return new ResponseEntity<>(studentErrorResponse, HttpStatus.NOT_FOUND);
+			}
+		}
+	
+	->Generic Exception Handler to catch all kind of exceptions
+	
+	@ExceptionHandler
+	public ResponseEntity<StudentErrorResponse> handleException(Exception exec) {//Exception to catch all exceptions
+		StudentErrorResponse studentErrorResponse = new StudentErrorResponse();
+		studentErrorResponse.setStatus(HttpStatus.BAD_REQUEST.value());//404
+		studentErrorResponse.setMessage(exec.getMessage());
+		studentErrorResponse.setTimestamp(System.currentTimeMillis);
+		return new ResponseEntity<>(studentErrorResponse, HttpStatus.BAD_REQUEST);
+	}
+	
+	->Global Exception Handling
+		->@ExceptionHandler is only for specific Rest Controller
+		-> Which cant be reused
+		-> @ControllerAdvice is similar to interceptor/filter
+		-> it preprocess requests to controller and postprocess response to handle exceptions
+		-> global exception handling
+		
+		REST Client ------------> Controller Advice ------------> REST Service
+					<-----------  Exception Handlers <----------- throw exception
+		-> create controller advice
+		
+		@ControllerAdvice --> global exception handler
+		public class StudentRestExceptionHandler {
+			@ExceptionHandler
+			public ResponseEntity<StudentErrorResponse> handleException(StudentNotFoundException exec) {
+				StudentErrorResponse studentErrorResponse = new StudentErrorResponse();
+				studentErrorResponse.setStatus(HttpStatus.NOT_FOUND.value());
+				studentErrorResponse.setMessage(exec.getMessage());
+				studentErrorResponse.setTimestamp(System.currentTimeMillis);
+				return new ResponseEntity<>(studentErrorResponse, HttpStatus.NOT_FOUND);
+			}
+		}
+			
+			
+		@RestController
+		@RequestMapping("/api")
+		public class StudentRestController {
+			@GetMapping("/students/{studentId}")
+			public List<Student> getStudents(@PathVariable int studentId) { -->studentId name must match with {studentId}
+				Student student = studentService.getStudent(studentId);
+				if(student != null) {
+					thow new StudentNotFoundException("student not found -- "+studentId);
+				}
+			}
+		}
+	
+Spring REST API Design
+	-> We need to consider
+		-> Who will use APIS
+		-> How API will be used
+	-> Identify the main entity ex:- in Customer Relationship management -> Customer
+	-> convention is to use plural form of resource -> Customers -> like api/customers
+	-> REST anti patterns -> /api/customerList, /api/deleteCustomer, /api/addCustomer, /api/updateCustomer - instead use HTTP methods
+	
+@EnableTransactionManagement Enables Spring's annotation-driven transaction management capability, similar to the support found in Spring's <tx:*> XML namespace. 
+
+
+@RequestBody annotation binds the pojo to method parameter
+
+@PostMapping("/customers")
+public Customer addCustomer(@RequestBody Customer customer) {
+}
+
+
+Hibernate session.saveOrUpdate -> if primary key is empty it performs insert or update the existing 
+					 -> "empty" means 0 or null.
+	
+Calling another REST service using Rest Template
+
+Get customers
+	
+@Override
+publicList<Customer> getCustomers() {
+logger.info("in getCustomers(): Calling REST API "+ crmRestUrl);
+// make REST call
+ResponseEntity<List<Customer>> responseEntity= restTemplate.exchange(crmRestUrl, HttpMethod.GET, null, newParameterizedTypeReference<List<Customer>>() {});
+// getthe list of customers from response
+List<Customer> customers= responseEntity.getBody();
+logger.info("in getCustomers(): customers"+ customers);
+returncustomers;
+}
+
+Get Customer by id
+
+@Override
+publicCustomer getCustomer(inttheId) {
+logger.info("in getCustomer(): Calling REST API "+ crmRestUrl);
+// make REST call
+Customer theCustomer= restTemplate.getForObject(crmRestUrl+ "/"+ theId, Customer.class);
+logger.info("in saveCustomer(): theCustomer="+ theCustomer);
+returntheCustomer;
+}
+
+Post customer
+
+@Override
+public void saveCustomer(Customer theCustomer) {
+logger.info("in saveCustomer(): Calling REST API "+ crmRestUrl);
+intemployeeId= theCustomer.getId();
+// make REST call
+if(employeeId== 0) {
+// add employee
+restTemplate.postForEntity(crmRestUrl, theCustomer, String.class);
+} 
+else{
+// update employeerestTemplate.put(crmRestUrl, theCustomer);
+}
+logger.info("in saveCustomer(): success");
+}
+
+Delete a customer
+@Override
+public void deleteCustomer(inttheId) {
+logger.info("in deleteCustomer(): Calling REST API "+ crmRestUrl);
+// make REST call
+restTemplate.delete(crmRestUrl+ "/"+ theId);
+logger.info("in deleteCustomer(): deleted customer theId="+ theId);
+}

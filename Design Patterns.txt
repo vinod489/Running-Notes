@@ -1,0 +1,62 @@
+Design Patterns are recurring solutions for thr problems
+-its basically not to reinvent the wheel again
+
+Design pattern should have a name, problem to solve, solution without an implementation to apply it in any language and a consequences of applying the pattern
+
+Design patterns vary in granularity(How many objects are requried), level of abstraction, and how they relate to each other
+
+three types organized by purpose
+
+Creational, - About creation of objects
+structural - How one object relates to one another
+and behavioural - How objects can work together
+
+Design Smells
+ - Rigidity 
+	- A single change causes a cascade of subsequent changes - tight coupling
+	- difficult to change
+	- for single change multiple modules have to be changed
+ -	Fragility
+	- break a software in multiple places for a single change
+	- problem occurs in other area when code is changed in other area
+- Immobility
+	- Unbale to separate a code which can be useful in other places
+- Viscosity
+	- if running unit tests  and compilation takes a lot of time, developer likely to bypass 
+- Needless Repetition
+	- copy and paste throught the system
+- Opacity
+	- Difficult to understand the code
+- Needless Complexity
+	- In a passionate attempt, developers to avoid other design smells, to cover every change in future introducing a lot of complexity
+	- do not over design
+- Duplication
+	- use inheritance to avoid duplication
+- Violates encapuslation
+- Classes are too large
+- Hard to read, breaks easily, hard to maintain
+
+Programming to interface
+	- Interface is like a contract. what a client uses
+
+- Using Composition over inheritance
+- Delegation Priniciples
+- Single Responsibility Priniciple
+- Open Closed Priniciple - Open for extension and closed for modifications
+
+Ex:- Wrong - Class AreaCalculator {
+	public void calcualteCircleArea() {
+	}
+	public void calcualteTriangleArea() {
+	}
+}
+
+Correct - Interface AreaCalculator {
+void getArea();
+}
+Class Circle implements AreaCalculator {
+	
+}
+Class Triangle implements AreaCalculator {
+	
+}

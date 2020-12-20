@@ -1,0 +1,350 @@
+Oracle ADF 
+	-> implements the Model-View-Controller design pattern and offers an integrated solution that covers all the layers of this architecture with solution to such areas as: Object/Relational mapping, data persistence, reusable controller layer, rich Web user interface framework, data binding to UI, security and customization. Extending beyond the core Web based MVC approach, ADF also integrates with the Oracle SOA and WebCenter Portal frameworks simplifying the creation of complete composite applications.For example, Oracle ADF makes it easy to develop agile applications that expose data as services by coupling a service interface to the built-in business services in ADF. This separation of business service implementation details is performed in Oracle ADF via metadata. Use of this metadata-driven architecture enables application developers to focus on the business logic and user experience, rather than the details of how services are accessedOracle ADF
+
+THE ORACLE ADF ARCHITECTURE
+-> Oracle ADF is based on the Model-View-Controller (MVC) design pattern. An MVC application is separated into: 1) a model layer that handles interaction with data-sources and runs the business logic, 2) a view layer that handles the application user interface, and 3) a controller that manages the application flow and acts as the interface between the Model and the View layers. Separating applications into these three layers simplifies maintenance and reuse of components
+across applications. The independence of each layer from the others results in a loosely coupled,Service Oriented Architecture (SOA).
+Oracle ADF implements MVC and further separates the model layer from the business services to enable service-oriented development of applications
+
+Four Layers
+
+-> The Business Services layer - provides access to data from various sources and handles business logic.
+-> The Model layer - provides an abstraction layer on top of the Business Services layer, enabling the View and Controller layers to work with different implementations of Business Services in a consistent way.
+-> The Controller layer - provides a mechanism to control the flow of the Web application.
+-> The View layer - provides the user interface of the application	
+
+View 			  --> [ADF Swing, Office] [Mobile]   [JSF ADF Faces]
+controoler 		  -->						[JSF	 ADF Controller]
+Model			  --> [				 ADF Binding				   ]
+Business Services --> [ Java, EJB, ADF BC, Web Services, ......... ]  
+Data services	  --> [ Database, Web Services, Legacy Systems,Apps]
+
+The glue that integrates the various components of Java EE applications and makes development so flexible is the Oracle ADF model layer
+
+The Business Services Layer
+The Business Services layer manages interaction with a data persistence layer. It provides such services as data persistence, object/relational mapping, transaction management, and business logic execution. The Business Services layer in Oracle ADF can be implemented in any of the following options:
+As simple Java classes, EJB, Web services, JPA objects, and Oracle ADF Business Components. In addition, data can be consumed directly from files (XML or CSV) as well as REST.
+
+The View Layer
+The View layer represents the user interface of the application. Oracle ADF support multi-channel access to your business services allowing you to reuse your
+business services and access them from a Web client, a client-server swing desktop based application, Microsoft Excel spreadsheets, or a mobile devices such as a smart-phone. For Web based interface Oracle ADF offers a rich set of over a 150 Ajax enabled JSF components that simplified the creation of dynamic and appealing user interfaces.
+
+The Controller Layer
+The controller layer manages the applications flow and handles user input. For example, when you click a Search button on a page, the controller determines what action to perform (do a search) and where to navigate to (the results page).There are two controller options for web-based applications in JDeveloper: the standard JSF controller or the ADF Controller which extends the JSF controller functionality. Whichever controller you use, you will typically design your application flow by laying out pages and navigation rules on a diagram. With the ADF controller you can break your application's flow into smaller, reusable task flows; include non-visual components such as method calls and decision points in your flow; and create "page fragment" flows that run inside a region of a single containing page. This approach encourages maximum reusability for user interface fragments and simplified integration into portals and mashup applications
+
+The Model Layer
+The model layer connects the business services to the objects that use them in the other layers. Oracle ADF provides a model layer implementation that sits on top of business services, providing a single interface that can be used to access any type of business service. The model layer consists of two components, data controls and data bindings, which utilize metadata files to define the interface. Data controls abstract the business service implementation details from 
+clients. Data bindings expose data control methods and attributes to UI components, providing a clean separation of the view and model. Due to the metadata architecture of the model layer, developers get the same development experience when binding any type of Business Service layer
+implementation to the View and Controller layers. 
+
+Integrated Security
+Oracle ADF comes with built in security implementation across the layers. Developers can define users and roles and assign various authorizations to them. Privileges can be assigned at the business service layer, the controller layer or the UI layer. This integrated security framework
+across the layers eliminate the need to replicate security mechanisms at each layer.
+
+ORACLE ADF BENEFITS
+-> Visual and Declarative Java EE Development
+-> Business Services Development
+-> User Interface Development
+-> Visual and declarative development features of the View and Controller layers of an application are plentiful in Oracle JDeveloper:
+-> Binding Business Services Components to the User Interface
+
+Benefits of Oracle ADF Over Other Frameworks
+-> End-to-End Solution – Oracle ADF doesn’t focus on just one layer of the Java EE
+architecture. ADF provides an integrated and complete solution for every Java EE layer from the
+view layer and data-bindings, through the business services and data access
+-> Development Environment – Many of the other Java EE frameworks lack strong integrated support by development tools
+-> Platform Independence – Other frameworks lock developers into a specific software vendor. 
+-> Technology Choice – Developers have preferences for the way they implement different layers of an application
+-> Technology Commitment - It is important to note that Oracle ADF is the technology choice for the Oracle next generation set of enterprise applications 		Oracle Fusion Applications is in continuous use for internal development purposes.
+-> Metadata-Driven
+-> Declarative Customization
+-> Enhanced Reusability -– JDeveloper + ADF provides support for superior reusability features including: JSF templating, reusable task flows, task flow templating, reusable business services,ADF libraries, JSF fragment based regions
+-> Source availability - Oracle provides the source code for the ADF framework to customers with a support license
+
+
+ADF Life Cycle
+
+-> JSF Life Cycle
+	-> The JSF lifecycle phases use a UI component tree to manage the display of the components. 
+	-> This tree is a runtime representation of a JSF page: each UI component tag in a page corresponds to a UI component instance in the tree.
+	-> The FacesServlet object manages the page request lifecycle in JSF applications. 
+	-> The FacesServlet object creates an object called FacesContext, which contains the information necessary for request processing, and invokes an object
+		that executes the lifecycle
+-> The ADF Faces lifecycle extends the JSF lifecycle, providing additional functionality, such as a client-side value lifecycle, a subform component that allows you to create independent submittable sections on a page without the drawbacks (for example, lost user edits) of using multiple forms on a single page, and additional scopes. 		
+
+-> The ADF page lifecycle handles preparing and updating the data model, validating the data at the model layer, and executing methods on the business layer. The ADF page lifecycle uses the binding container to make data available for easy referencing by the page during the current page request.
+
+<< Refer to ADF Life cycle picture >>
+
+The basic flow of processing a web page request using JSF and Oracle ADF happens as follows:
+ -> 1. A web request for http://yourserver/yourapp/faces/some.jsp arrives from the client to the application server.
+ -> 2. The ADFBindingFilter object looks for the ADF binding context in the HTTP session, and if it is not yet present, initializes it for the first time. Some of the functions of the ADFBindingFilter include finding the name of the binding context metadata file, and finding and constructing an instance of each data control.
+ -> 3. The ADFBindingFilter object invokes the beginRequest() method on each data control participating in the request. This method gives the data control a notification at the start of every request so that it can perform any necessary setup.
+ -> 4. The JSF Lifecycle object, which is responsible for orchestrating the standard processing phases of each request, notifies the ADFPhaseListener class during each phase of the lifecycle, so that it can perform custom processing to coordinate the JSF lifecycle with the ADF Model data binding layer.
+ -> 5. The ADFPhaseListener object creates an ADF PageLifecycle object to handle each request and delegates the appropriate before and after phase methods to corresponding methods in the ADF PageLifecycle class. If the binding container for the page has never been used before during the user's session, it is created.
+ -> 6. The first time an application module data control is referenced during the request, it acquires an instance of the application module from the application module pool.
+ -> 7. The JSF Lifecycle object forwards control to the page to be rendered.
+ -> 8. The UI components on the page access value bindings and iterator bindings in the page's binding container and render the formatted output to appear in the browser.
+ -> 9. The ADFBindingFilter object invokes the endRequest() method on each data control participating in the request. This method gives a data control notification at the end of every request, so that they can perform any necessary resource cleanup.
+ -> 10. An application module data control uses the endRequest notification to release the instance of the application module back to the application module pool.
+ -> 11. The user sees the resulting page in the browser.
+ 
+ The ADF page lifecycle also contains phases that are defined simply to notify ADF page lifecycle listeners before and after the corresponding JSF phase is executed (that is, there is no implementation for these phases). These phases allow you to create custom listeners and register them with any phase of both the JSF and ADF page lifecycles, so that you can customize the ADF page lifecycle if needed, both globally or at the page level.
+ 
+ --> Restore View --------> Apply Request Values ------> Process validations ------> Update values to model -----> Invoke Application -----> Render Response
+		|							|							|--------------------------------Exception ------------------------------------------->
+		|							|--------------------------------------------------------Exception ----------------------------------------------->
+		|-------------------------------------------------------------------------------------Initial Request ---------------------------------------->
+	
+for example, you have a page with some text displayed in an input text component and a button. 
+	-> When that page is first rendered, the component tree is built during the Restore View phase and then the lifecycle goes straight to the Render Response phase, as the components are rendered. 
+	-> When the user clicks the button, the full lifecycle is invoked. The component tree is rebuilt, the input text component extracts any new value during the Apply Request Values phase and Process Validations phase, and if there is an error, for example due to validation, then the lifecycle jumps to the Render Response phase. 
+	-> Otherwise, the model is then updated with the new value during the Update Model phase, and then any application processing associated with the button (such as navigation), is executed during the Invoke Application phase.
+
+Restore View: The URL for the requested page is passed to the bindingContext object, 
+			  which finds the page definition file that matches the URL. -- Binding context contains the mapping of URL and its page definition file
+			  The component tree of the requested page is either newly built or restored. 
+			  All the component tags, event handlers, converters, and validators on the submitted page have access to the FacesContext instance. 
+			  If the component tree is empty, (that is, there is no data from the submitted page), the page lifecycle proceeds directly to the Render Response phase.
+			  
+Initialize Context: The page definition file is used to create the bindingContainer object, 
+					which is the runtime representation of the page definition file for the requested page. 
+					The LifecycleContext class used to persist information throughout the ADF page lifecycle phases is instantiated and initialized with values for the associated request, binding container, and lifecycle.
+					
+Prepare Model: The ADF page lifecycle enters the Prepare Model phase by calling the BindingContainer.refresh(PREPARE_MODEL) method. 
+			   During the Prepare Model phase, BindingContainer page parameters are prepared and then evaluated. 
+			   If parameters for a task flow exist, they are passed into the flow.
+			   Next, any executables that have their refresh property set to prepareModel are refreshed based on the order of entry in the page definition file's <executables> section and on the evaluation of their RefreshCondition properties (if present). 
+			   When an executable leads to an iterator binding refresh, the corresponding data control will be executed, and that leads to execution of one or more collections in the service objects. If an iterator binding fails to refresh, a JBO exception will be thrown and the data will not be available to display.
+			   If the incoming request contains no POST data or query parameters, then the lifecycle forwards to the Render Response phase.
+			   If the page was created using a template, and that template contains bindings using ADF Model, the template's page definition file is used to create the binding container for the template. The container is then added to the binding context.
+			   If any taskFlow executable bindings exist (for example, if the page contains a region), the taskFlow binding creates an ADF Controller ViewPortContext object for the task flow, and any nested binding containers for pages in the flow are then executed.
+			   
+Apply Request Values: Each component in the tree extracts new values from the request parameters (using its decode method) and stores those values locally. 
+					  Most associated events are queued for later processing. If you have set a component's immediate attribute to true, then the validation, conversion, and events associated with the component are processed during this phase and the lifecycle skips the Process Validations, Update Model Values, and Invoke Application phases.
+					  
+Process Validations: Local values of components are converted and validated on the client. 
+					 If there are errors, the lifecycle jumps to the Render Response phase. At the end of this phase, new component values are set, any validation or conversion error messages and events are queued on FacesContext, and any value change events are delivered. 
+					 Exceptions are also caught by the binding container and cached.
+					 
+Update Model Values: The component's validated local values are moved to the model and the local copies are discarded. 
+					  For any updateable components (such as an inputText component), corresponding iterators are refreshed, if the refresh condition is set to the default (deferred) and the refresh condition (if any) evaluates to true.
+
+	Validate Model Updates: The updated model is now validated against any validation routines set on the model. 
+							Exceptions are caught by the binding container and cached.
+
+Invoke Application: Any action bindings for command components or events are invoked
+
+Render Response: The components in the tree are rendered as the Java EE web container traverses the tags in the page. 
+				 State information is saved for subsequent requests and the Restore View phase.
+				 
+
+PPR 
+
+ADF Faces provides an optimized lifecycle that you can use when you want the page request lifecycle (including conversion and validation) to be run only for certain components on a page, usually for components whose values have changed.
+One way to use the optimized lifecycle is to manually set up dependencies so that the events from one component act as triggers for another component, known as the target. When any event occurs on the trigger component, the lifecycle is run on any target components, as well as on any child components of both the trigger and the target, causing only those components to be rerendered. This is considered a partial page rendering (PPR)
+
+Scopes
+	-> application, session, page flow, request, backing bean, view
+	
+Custom Phase Listener
+	-> 
+	public class MyPagePhaseListener implements PagePhaseListener
+	{
+		   public void afterPhase(PagePhaseEvent event)
+		   {
+			  System.out.println("In afterPhase " + event.getPhaseId());
+		   }
+		 
+		 
+		   public void beforePhase(PagePhaseEvent event)
+		   {
+			  System.out.println("In beforePhase " + event.getPhaseId());
+		   }
+	}
+	
+	To customize the ADF lifecycle globally, register your custom phase listener by editing the adf-settings.xml configuration file. The adf-settings.xml file is shared by several ADF components, including ADF Controller, to store configuration information.
+	
+	<adfc-controller-config xmlns="http://xmlns.oracle.com/adf/controller/config">
+       <lifecycle>
+         <phase-listener>
+            <listener-id>MyPagePhaseListener</listener-id>
+            <class>mypackage.MyPagePhaseListener</class>        
+         </phase-listener>
+      </lifecycle>
+   </adfc-controller-config>
+   
+   You can specify multiple phase listeners in the adf-settings.xml and, optionally, the relative order in which they are called.
+   
+   To customize the lifecycle of a single page, you set the ControllerClass attribute on the page definition file. This listener will be valid only for the lifecycle of the particular page described by the page definition.
+   
+ ADF Model
+	-> ADF Model is a declarative framework that provides an abstraction layer between business services and the view and controller layers of an enterprise application that standardizes the way that components in those layers interact with each other. 
+	
+ADF Model consists of the following central features:
+
+--> data controls, which abstract the implementation technology of a business service by using standard metadata interfaces to describe the service's operations and data collections, including information about the properties, methods, and types involved.
+
+--> declarative bindings, which are used to bind services that are exposed by data controls to UI components.
+
+There are different types of data controls, depending on what type of business service you are using. The main types of data controls are:
+Adapter data controls for common business services such as EJBs, plain Java classes (POJO), SOAP-based web services, and RESTful web services
+Data controls based on ADF Business Components application modules
+
+
+Declarative bindings provide a way to call from the view layer into the model layer using EL expressions or Java code.
+The following are the three categories of bindings:
+value bindings, which are used by UI components to display data. There are sub-types of value binding objects for trees, lists, and other components.
+action bindings, which are used to bind buttons and links to service methods and operations.
+executable bindings, which include iterator bindings and which generally concern background tasks, such as managing queries and row currency.
+
+These binding objects are defined in page definition files, which are created and updated automatically when you use the Data Controls panel to create databound components. By default, a generated page definition file name takes the name of its corresponding web page, appends pageDef, and takes the xml extension. There is one page definition file for each page.
+
+The binding objects for each page reference data control objects to provide the UI components with data. At runtime they are instantiated in a binding container. A page can access its corresponding binding container using expressions based on the EL namespace bindings. Such expressions always evaluate to the binding container for the current page. A typical expression takes the form #{bindings.BindingObject.propertyName} where BindingObject refers to an object or attribute defined in the page definition file and propertyName refers to a standard ADF binding property. For example, #{bindings.Phone.inputValue} would return the value of the Phone attribute.
+
+Together, all of an application's binding containers and their references to data controls form the application's binding context. This binding context is represented at design time by the DataBindings.cpx file, which is located in an application's UI project.
+
+Getting value from sequencer for entity attribute
+	-> Map type of entity attribute to DBSequence
+	-> ADF Insert with -ve values
+	-> write a trigger to insert with the value from sequece value if value is -ve
+
+ADF Business Components
+	-> Manages Persistance
+		-> O/R mapping
+		-> Querying, DML
+	-> Performs Validations
+		-> Data validation
+	-> Simplify Data Access
+	-> Simplify validation and business logic
+	-> use SQL based views
+	-> separate data views from business logic
+
+Three Layers 
+
+1st Layer
+	
+Entity Objects
+	-> Represents tables in database, maps to tables in database
+	-> Allows to do Insert/Update/Delete in tables
+Assocations
+	-> relation b/w tables
+	
+2nd Layer
+
+View Obejcts
+	-> Represents a set of data we interacting with
+	-> can be updatable or non-updatable
+View Links
+	-> Relation b/w view objects
+
+3rd Layer
+
+Application Module
+	-> Exposes the interfaces for viewlayer
+	-> handles the connection to database and transactions management
+	-> Exposes a datamodel
+	-> datamodel consists of VOs view links and service methods
+
+Application Module (View Object instances) ------------ View Objects & View Links ---------- Entity Objects & Associations ------ Database
+
+Entity Objects
+	-> Maps to a row in database table
+	-> Handles insert, update and delete
+	-> attributes map to columns in tables
+	-> can be used to define valdiations on attributes
+
+Assocaitions
+	-> Defines relationship between EOs
+	-> Generally its a primary key and foreign key relation ship
+	-> Associations exists without primary key and foreign key idenpendent of database constraints
+	-> defining validations and LOV
+	-> consist of master and detai entity
+
+View Object
+	-> Represnts a query
+	-> Its uses a sequel to access the data, can use all sql functionalities like joining, filtering, sorting
+	-> Can be defined on single EO or multiple EO
+	-> can be constructed from SQL statement, programattic and static
+	-> non-updatable is built from SQL query and updatable is based on entity
+	-> non-updatable is built from SQL query - simply returns resultset
+	-> in updatable VO data comes from EO - data is fetched into EO first and then VO, EO maintains cache because of multiple VOs
+
+Application Module
+	-> defines a data model that will be exposed for the developer who is going to use business services
+	-> controls the connection to database and transactional management
+	-> can be reused and nested
+	
+UI Lables are imported into messagebundle.properties can be used for i18n
+
+Entity attribute Validation Rules -> Compare, Key Exists, Length, List, Method, Range, Expression, Regular Expression validators
+Failure Handling -> can give validators failed message
+Can be given validation for entire Entity
+
+View Criteria -> Define multiple query conditions
+			  -> Apply selected condition at run time
+			  -> Enables further view object reusability
+View Object based on Join Query -> Define at view object query, can be updatable -> can be based on more than one entity and use joins
+View Link -> Master Detail Relation Ship
+		-> derived from database relationship
+		-> can also be created without relation
+List of values -> Define at attribute level
+			   -> Get list from another object
+			   -> Define type of list and behaviour
+			   -> Can create a list of values for VO attributes
+Application module defines the data model that is going to be exposed for the developes who is going to use businsess services
+	->AppModule.xml contains the business sevices that will be exposed
+
+ADF BC uses XML metdata to describe the objects
+BY default there are no java files created
+For more complex logic we can create java files and override the default behaviour
+We can create java files for EO, VO and AM
+The *impl file is the one which will be useful in most cases
+	-> there are a lot of methods to override -> like after commit, before commit, remove, setters and getters etc.
+	-> when Method validation type is selected, a method with the given name will be created in entity java file
+A new custom methods can be added in application module and expose them into data control as client interface
+	-> we can get view object in application moduel and do operations on it
+Application Module can only be accessed from Model classes
+	->ApplicationModule am = Configuration.createRootApplicationModule();
+	
+Get Application Module in managed Bean
+
+FacesContext context = FacesContext.getCurrentInstance();
+BindingContext bindingContext = BindingContext.getCurrent();
+DCDataControl dc  = bindingContext.findDataControl("AppModuleAMDataControl"); // Name of application module in datacontrolBinding.cpx
+AppModuleAMImpl appM = (AppModuleAMImpl)dc.getDataProvider();
+
+Master-Detail Relationship
+	-> will face a problem, when user will try to insert Master and Detail record during the same transaction
+	-> There will be a problem, because framework will try to commit Detail record without any value for foreign key. There will be no value for foreign key, because Master record is still not committed and sequence number is not assigned for Master record primary key. When user will try to close transaction by committing new records from Master and Detail, integrity constraint violation error will be thrown by database:
+	-> And basically to select one checkbox in Behavior group, this checkbox is Composition Association. By selecting this option, you will force framework to use so called strong association between two Entities. With strong association, framework automatically will ensure correct foreign key value propagation for Detail record:
+
+Entity Object methods
+	-> create()
+	-> remove()
+	-> doDML() -> on commit/rollback
+	
+Sometimes we may restrict users to delete any records from the table. We could achieve this by modifying the doDML operation like below
+protect void doDML(int operation, TransactionEvent e) {
+	if(DML_DELETE == operation) {
+			
+	}
+}
+
+
+Most Commonly useful Business Objects Methods
+-> Application module
+	-> findViewObject(), createViewObject(), createViewObjectFromQueryStmt(), findApplicationModule(), createApplicationModule(), 	
+getTransaction()
+-> Transaction Interface
+	-> commit(), rollback(), executeCommand(), validate(), setLockingMode(), setBundledExceptionMode(), clearEntityCache()
+-> View Object
+	-> setWhereClause(), setOrderByClause(), createViewCriteria(), applyViewCriteria(), addDynamicAttribute(), clearCache() - Clear all row sets produced by a view object, remove(), setMaxFetchSize()
+-> Application Module IMPL class
+	->	getDBTransaction() ->Access the current DBTransaction object
+	
+Entity IMPL
+-> setAttributeName() -  setter method calls setAttributeInternal(), but provides compile-time type checking.
+-> Modify attribute values before changes are posted to the database - prepareForDML()
+-> Perform complex, SQL-based validation after all entity instances have been posted to the database but before those changes are committed - beforeCommit()
+-> 

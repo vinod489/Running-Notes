@@ -1,0 +1,459 @@
+Spring Security
+	-> How to secure webapps
+	-> Develop login pages
+	-> Define users and roles with simple authentication
+	-> Protect URLs based on roles
+	-> Use JSP tags to hide/show content based on roles
+	-> Sore users/passwords and roles in DB (plain -> encrypted)
+	
+	
+-> Spring security is a framework for security
+-> Use servlet filters in background
+-> either use declarative or programmatic
+-> Servlet filters can pre-process or post-process
+-> filters can route web requests based on security logic
+-> provides a bulk of securtiy functionality with filters
+
+
+Browser ---------------Spring securtiy filters --------------web source
+							|
+							|
+							|-----------security configuration app --------users, passwords and roles
+							
+Speing security provides a default authentication form
+
+Authentication and Authorization
+	->in memory
+	->JDBC
+	->LDAP
+	->Custom/Pluggable
+	
+add spring web mvcm, jsp, servlet and jstl dependencies
+
+-> maven war plugin -> do not need web.xml
+
+@EnableWebMVC -> similar to <mvc:annotation-driven/> - support for conversion, validation and formatting
+			-> also support for @Controller, @Requestmapping etc
+
+Spring configuration class
+
+@Configuration
+@EnableWebMVC
+@ComponentScan(basePackage="com.luv2code.springsecurity.demo")
+public class DemoAppConfig {
+	@Bean
+	public ViewResolver viewResolver() {
+		InternalResourceViewResolver viewResolver = new InternalResourceViewResolver();
+		viewResolver.setPrefix("/WEB-INF/View");
+		viewResolver.setSuffix(".jsp");
+		return viewResolver;
+	}
+}
+
+For spring dispatcher servlet in web.xml we define servlet dispatcher servlet and pass spring config file as init parameter
+and provide url mapping and provide load on startup servlet. 
+
+-> Spring MVC provides support for web app initialization
+-> Make sure your code is automatically detected
+-> initialize the servlet container - AbstractAnnotationConfigDispatcherServletInitializer
+-> extend AbstractAnnotationConfigDispatcherServletInitializer
+
+
+public class MySpringMvcDispatcherServletInitializer extends AbstractAnnotationConfigDispatcherServletInitializer {
+ 
+	@Override
+	protected Class<?>[] getRootConfigClasses() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+ 
+	@Override
+	protected Class<?>[] getServletConfigClasses() {
+		return new Class[] { DemoAppConfig.class };
+	}
+	 
+		@Override
+		protected String[] getServletMappings() {
+			return new String[] { "/" };
+		}
+ 
+}
+
+
+Spring securtiy Maven dependencies
+
+-> Spring-Securty-Web
+-> Spring-Security-Config
+
+These two versions are not in sync
+
+Spring Securtiy Web App initializer
+	-> AbstractSecurityWebApplicationInitializer -> special class to register spring security filters
+	
+public class SecurityWebApplicationInitializer extends AbstractSecurityWebApplicationInitializer {
+	//nothing here
+}
+	
+Create a spring securtiy configuration class which extends WebSecurityConfigurerAdapter class and override Configure method
+
+@Configuration
+@EnableWebSecurity
+public class DemoSecurityConfig extends WebSecurtiyConfigurerAdapter {
+	@Override
+	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+		UsersBuilder users = User.withDefaultPasswordEncoder(); ==>deprecated in spring 5.0.2
+		auth.inMemoryAuthentication()
+			.withUser(users.username("john").password("test123").roles("EMPLOYEE"))
+			.withUser(users.username("mary").password("test123").roles("MANAGER"))
+			.withUser(users.username("susan").password("test123").roles("ADMIN"))
+	}
+}
+
+when these two classes are there..spring security is implemented
+
+Custom Login Form
+->
+
+@Configuration
+@EnableWebSecurity
+public class DemoSecurityConfig extends WebSecurtiyConfigurerAdapter {
+	@Override
+	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+		UsersBuilder users = User.withDefaultPasswordEncoder(); ==>deprecated in spring 5.0.2
+		auth.inMemoryAuthentication()
+			.withUser(users.username("john").password("test123").roles("EMPLOYEE"))
+			.withUser(users.username("mary").password("test123").roles("MANAGER"))
+			.withUser(users.username("susan").password("test123").roles("ADMIN"))
+	}
+	
+	@Override
+	protected void configure(HttpSecurity htp) throws Exception {
+		htp.authorizeRequest() --> Restrict request based on securtiy -> authorize request
+			.anyRequest().authenticated() -> Any request to the app must be authenticated
+			.and()
+			.formLogin() -> customizing the login process
+			.loginPage("/showMyLoginPage") -> Show the custom form at request mapping /showMyLoginPage
+			.loginProcessingUrl("/authenticateTheUser") -> submit form in login page
+			.permitAll(); -> allow everyone to see the login page
+	}
+}
+
+create /showMyLoginPage and /authenticateTheUser request mapping in controller
+
+@Controller
+public class LoginController {
+	@GetMapping("/showMyLoginPage")
+	public String getLoginPage() {
+		return "loginpage";
+	}
+	
+	@PostMapping("/authenticateTheUser")
+	public String submitLoginPage() {
+		return "loginpage";
+	}
+}
+
+loginpage.jsp
+
+${PageContext.request.contextPath} --> dynamic reference to context path
+
+<form:form action="${PageContext.request.contextPath}/authenticateTheUser" method="POST">
+</form:form>
+
+Spring securtiy filters will read the form data and authenticate the user
+<input type="text" name="username"/> --> name should be username
+<input type="text" name="password"/> --> name should be password
+
+How to show login error page in custom form
+	-> using jstl we can do it
+	-> if error occurs in the url we will get ?error at the end
+	-> using this error param we can show a message
+
+How to refer css files in login form as spring security block any requests if not authenticated
+-> place css file in /css directory
+-> Configure Spring Security to allow unauthenticated requests (permit all) to the "/css" directory
+
+            http.authorizeRequests()
+                    .antMatchers("/css/**").permitAll() -> permit all requests from css directory
+                    .anyRequest().authenticated()
+                .and()
+                .formLogin()
+                    .loginPage("/showMyLoginPage")
+                    .loginProcessingUrl("/authenticateTheUser")
+                    .permitAll();        
+-> Configure the all Java configuration to serve content from the "/css" directory
+	DemoAppConfig to implement the WebMvcConfigurer interface. This allows you to override a method for serving up content from the "/css" directory. 
+	
+	@Configuration
+@EnableWebMvc
+@ComponentScan(basePackages = "com.luv2code.springsecurity.demo")
+public class DemoAppConfig implements WebMvcConfigurer {
+ 
+    // define a bean for ViewResolver
+ 
+    @Bean
+    public ViewResolver viewResolver() {
+ 
+        InternalResourceViewResolver viewResolver = new InternalResourceViewResolver();
+ 
+        viewResolver.setPrefix("/WEB-INF/view/");
+        viewResolver.setSuffix(".jsp");
+ 
+        return viewResolver;
+    }
+ 
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        registry.addResourceHandler("/css/**").addResourceLocations("/css/");
+    }
+}
+
+
+Logout
+	->logout support for spring securtiy configuration
+		htp.authorizeRequests()
+			.anyRequest().authenticated()
+			.and()
+			.formLogin()
+				.loginPage("/")
+				.loginProcessingUrl("/")
+				.permitAll()
+			.and()
+			.logout().permitAll();
+
+In jsp we have to add a button with /logout action. It will be checked by spring securtiy filters automatically
+
+<form:form action="${PageContext.request.contextPath}/logout" method="POST">
+</form:form>
+
+Once the user logged out
+	-> spring removes the session, cookies
+	-> send used back to login page
+	->append ?logout at the end of url
+	
+Cross Site Request Forgery CSRF
+	-> Its a security attack where any other website tricks you into executing an action on a webapplication that you are currently loggedin
+	-> to protect agaist cross site request forgery embeed additional authentication data/token into html form
+	-> spring security provides this functionality
+	-> Spring security used Synchronizer Token Pattern
+		-> Each request includes a session cookie and randomly generated token
+	-> spring security verifies this toke for every request before processing
+	-> use for any browser requests
+	-> can be disabled for non-browser requests
+	-> <form:form> automatically adds CSRF tokens
+	-> how to add manually
+		-> input type ="hidden" name="${_csrf.parameterName}"
+		value="${_csrf.token}"/>
+	-> when csrf token is not provided 403-forbidden request page will come
+
+Dispaly UserID and roles
+	-> Spring security provides jsp tags for displaying userid and password
+	-> have to add spring-security-taglibs to pom.xml
+	-> add @taglib for spring securtiy tags in jsp
+	-> user: <security:authentication property="pricipal.username"/> - display user id
+	-> user: <security:authentication property="pricipal.authorities"/> - display role
+	
+Restrict access based on roles
+	-> multiple roles to a user
+	
+@Configuration
+@EnableWebSecurity
+public class DemoSecurityConfig extends WebSecurtiyConfigurerAdapter {
+	@Override
+	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+		UsersBuilder users = User.withDefaultPasswordEncoder(); ==>deprecated in spring 5.0.2
+		auth.inMemoryAuthentication()
+			.withUser(users.username("john").password("test123").roles("EMPLOYEE"))
+			.withUser(users.username("mary").password("test123").roles("EMPLOYEE", "MANAGER"))
+			.withUser(users.username("susan").password("test123").roles("EMPLOYEE", "ADMIN"))
+	}
+}
+
+antMatchers
+	-> antMatchers("/").hasRole("EMPLOYEE"); -> match rootpath
+	-> antMatchers("/leaders/**").hasRole("MANAGER"); -> match leaders and all subdirectories
+	-> antMatchers("/system/**").hasRole("ADMIN"); -> match system and all subdirectories for Admin role
+	-> antMatchers("/system/**").hasAnyRole("ADMIN","EMPLOYEE"); -> has any role -> checking in more than one role
+
+htp.authorizeRequests()
+			.antMatchers("/").hasRole("EMPLOYEE")
+			.antMatchers("/leaders/**").hasRole("MANAGER")
+			.antMatchers("/system/**").hasRole("ADMIN")
+			.and()
+			.formLogin()
+				.loginPage("/")
+				.loginProcessingUrl("/")
+				.permitAll()
+			.and()
+			.logout().permitAll();
+
+http 403-forbidden for if user doesnt have access
+
+Custom access-denied page
+	->exceptionHandling().accessDeniedPage("/access-denied");
+				
+		htp.authorizeRequests()
+			.antMatchers("/").hasRole("EMPLOYEE")
+			.antMatchers("/leaders/**").hasRole("MANAGER")
+			.antMatchers("/system/**").hasRole("ADMIN")
+			.and()
+			.formLogin()
+				.loginPage("/")
+				.loginProcessingUrl("/")
+				.permitAll()
+			.and()
+			.logout().permitAll()
+			.exceptionHandling()
+				.accessDeniedPage("/access-denied");
+
+Display content based on roles
+	-> use case:- dont show the unauthorized roles
+	<security:authorize access="hasRole('MANAGER')">
+		--content only for managers
+	</security:authorize>
+	
+	<security:authorize access="hasRole('ADMIN')">
+		--content only for admin
+	</security:authorize>
+
+JDBC based authentication
+	-> spring security can read user account from database
+	-> have to follow spring security predefined table schemas
+	-> can also customize schemas
+	
+	two tables -> same to be as exact
+		-> 1.users and 2.authorities
+		users -> cols(username, password, enabled)
+		authorities -> cols(username,authority)
+	
+	spring 5 -> passwords are stored using a specific formatting
+		{id}encodedPassword
+	Id -> algorithm used for encryption
+	
+	noop -> plain password -> no encryption
+	bcrypt -> bcrypt password hashing
+	
+Maven
+	-> add mysql connector and connection pool dependencies
+	
+JDBC properties
+	->src/main/resources/persistence-mysql.properties
+		jdbc.driver=
+		jdbc.url=
+		jdbc.user=
+		jdbc.password=
+		
+		connection.pool.initialPoolSize=
+		connection.pool.minPoolSize=
+		connection.pool.maxPoolSize=
+		connection.pool.maxIdleTime=
+
+Define datasource in spring configuration
+	@Configuration
+	@EnableWebMVC
+	@ComponentScan(basePackages="")
+	@PropertySource("classpath:persistence-mysql.properties") 
+						-> will read the file from classpath. this file will be automatically copied tp classpath duing maven buid
+	public class DemoConfig {
+		@Autowired
+		private Environment env; --> will hold data from properties file
+		
+		@Bean
+		public DataSource securityDataSource() {
+			ComboPooledDataSource securityDataSource = new ComboPooledDataSource();
+			 
+				securityDataSource.setDriverClass(env.getProperty("jdbc.driver"));
+				---
+				---
+			return securityDataSource;
+		}
+	}
+
+
+Security Config to use JDBC
+
+	@Configuration
+	@EnableWebSecurity
+	public class DemoSecurityConfig extends WebSecurityConfigurerAdapter {
+		@Autowired
+		private DataSoruce securtiyDataSource;
+		
+		@Override
+		protected voide confiure(AuthenticationManagerBuilder auth) throws Exception {
+			auth.jdbcAuthentication().dataSource(securtiyDataSource); --> tell spring security to use this datsource
+		}
+	}
+	
+Encrypted Passwords
+ -> bcrypt password encyption - recomended by spring -> its a one way hashing algorithm
+ -> we can get bcrypt using web utility or writing a java code
+ 
+ -> Spring Configuration
+	-> data in database have to be saved as {bcrypt}$123idiudvjsddcsdsad52r8u2jjkc - {bcrypt} -8 chars and password - 60chars
+ -> Behind the scenes
+	-> reterieve password from database
+	-> check its encryption type
+	-> in case of bcrypt ..encrypt the password from login form using the same signature followed for database password
+	-> compare login form password and encrypted password
+	-> password from database has never been decrypted - because it is one way
+	
+Add a landing page without security
+	->use antMatchers("/").permitAll();// allow public access to landing page
+	
+Spring method level security
+	-> Add spring-security-config in maven dependencies or spring-boot-starter-security with spring security
+	
+	@Configuration
+	@EnableGlobalMethodSecurity(
+		prePostEnabled = true, 
+		securedEnabled = true, 
+		jsr250Enabled = true)
+	public class MethodSecurityConfig 
+	  extends GlobalMethodSecurityConfiguration {
+	}
+
+    The prePostEnabled property enables Spring Security pre/post annotations
+    The securedEnabled property determines if the @Secured annotation should be enabled
+    The jsr250Enabled property allows us to use the @RoleAllowed annotation
+	
+	The @Secured annotation is used to specify a list of roles on a method. Hence, a user only can access that method if she has at least one of the specified roles.
+
+	Let's define a getUsername method:
+
+	@Secured("ROLE_VIEWER")
+	public String getUsername() {
+		SecurityContext securityContext = SecurityContextHolder.getContext();
+		return securityContext.getAuthentication().getName();
+	}
+
+	Here, the @Secured(“ROLE_VIEWER”) annotation defines that only users who have the role ROLE_VIEWER are able to execute the getUsername method.
+
+	Besides, we can define a list of roles in a @Secured annotation:
+
+	@Secured({ "ROLE_VIEWER", "ROLE_EDITOR" })
+	public boolean isValidUsername(String username) {
+		return userRoleRepository.isValidUsername(username);
+	}
+
+	In this case, the configuration states that if a user has either ROLE_VIEWER or ROLE_EDITOR, that user can invoke the isValidUsername method.
+	
+	The @RoleAllowed annotation is the JSR-250’s equivalent annotation of the @Secured annotation. 
+	we can use the @RoleAllowed annotation in a similar way as @Secured.
+	
+	Both @PreAuthorize and @PostAuthorize annotations provide expression-based access control. 
+	The @PreAuthorize annotation checks the given expression before entering the method, whereas, the @PostAuthorize annotation verifies it after the execution of the method and could alter the result.
+	
+	The @PreAuthorize(“hasRole(‘ROLE_VIEWER')”) has the same meaning as @Secured(“ROLE_VIEWER”) 
+	the annotation @Secured({“ROLE_VIEWER”,”ROLE_EDITOR”}) can be replaced with @PreAuthorize(“hasRole(‘ROLE_VIEWER') or hasRole(‘ROLE_EDITOR')”):
+	
+	@PostAuthorize annotation provides the ability to access the method result:
+
+	@PostAuthorize
+	  ("returnObject.username == authentication.principal.nickName")
+	public CustomUser loadUserDetail(String username) {
+		return userRoleRepository.loadUserByUserName(username);
+	}
+
+	In this example, the loadUserDetail method would only execute successfully if the username of the returned CustomUser is equal to the current authentication principal's nickname.
+	
+	To get the username and password into java class we can get it through Authentication Provider. We have to implement Authentication provider
