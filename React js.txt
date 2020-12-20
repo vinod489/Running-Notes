@@ -514,3 +514,5 @@ Component
 			-> With redux state is managed in outside container not with in the component
 			-> To pass the state from parent to lowest level --> It has to passed through all levels without redux
 			-> React-Redux is a official Redux UI binding library for react
+			
+componentWillReceiveProps is required if you want to update the state values with new props values, this method will get called whenever any change happens to props values.
