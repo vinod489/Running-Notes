@@ -1,0 +1,287 @@
+Solid Design Priniciples
+
+1.Single Responsibility
+	- A class should have only one responsibility
+	- It should have only one reason to change
+	- Advantages of this pattern
+		- Testing - A class with one responsibility wil have far fewer test cases
+		- Lower Coupling - Less functionality in a single class will have fewer dependencies
+		- Organization - smaller, well organized ones are easy to search than monolothic ones
+	
+	We all know that requirements change over time. Each of them also changes the responsibility of at least one class. The more responsibilities your class has, the more often you need to change it. If your class implements multiple responsibilities, they are no longer independent of each other.
+
+	You need to change your class as soon as one of its responsibilities changes. That is obviously more often than you would need to change it if it had only one responsibility.
+
+	That might not seem like a big deal, but it also affects all classes or components that depend on the changed class. Depending on your change, you might need to update the dependencies or recompile the dependent classes even though they are not directly affected by your change. They only use one of the other responsibilities implemented by your class, but you need to update them anyway.
+
+	In the end, you need to change your class more often, and each change is more complicated, has more side-effects, and requires a lot more work than it should have. So, it’s better to avoid these problems by making sure that each class has only one responsibility
+		
+	Take, for example, a class to represent a simple book:
+
+	public class Book {
+
+		private String name;
+		private String author;
+		private String text;
+
+		//constructor, getters and setters
+	}
+	In this code, we store the name, author, and text associated with an instance of a Book.
+
+	Let's now add a couple of methods to query the text:
+	
+	public class Book {
+
+		private String name;
+		private String author;
+		private String text;
+
+		//constructor, getters and setters
+
+		// methods that directly relate to the book properties
+		public String replaceWordInText(String word){
+			return text.replaceAll(word, text);
+		}
+
+		public boolean isWordInText(String word){
+			return text.contains(word);
+		}
+	}
+	Now, our Book class works well, and we can store as many books as we like in our application. But, what good is storing the information if we can't output the text to our console and read it?
+
+	Let's throw caution to the wind and add a print method:
+
+	public class Book {
+		//...
+
+		void printTextToConsole(){
+			// our code for formatting and printing the text
+		}
+	}
+	This code does, however, violate the single responsibility principle we outlined earlier. To fix our mess, we should implement a separate class that is concerned only with printing our texts:
+
+	public class BookPrinter {
+
+		// methods for outputting text
+		void printTextToConsole(String text){
+			//our code for formatting and printing the text
+		}
+
+		void printTextToAnotherMedium(String text){
+			// code for writing to any other location..
+		}
+	}
+	Awesome. Not only have we developed a class that relieves the Book of its printing duties, but we can also leverage our BookPrinter class to send our text to other media.
+
+	Whether it's email, logging, or anything else, we have a separate class dedicated to this one concern.
+	
+	Real Time example is JPA EntityManager, Spring Repository interfaces like CurdRepository, PagingAndSortingRepository
+	Ex:- JPAAttributeConverter which is used to convert a Javacolumns into database type formatting
+		Ex:- java.time.Duration should be converted to long before saving in database
+	
+	@Converter(autoApply = true) 
+	public class DurationConverter implements AttributeConverter<Duration, Long> { 
+    @Override 
+    public Long convertToDatabaseColumn(Duration attribute) { 
+      return attribute.toNanos(); 
+    }   
+
+    @Override 
+    public Duration convertToEntityAttribute(Long duration) { 
+        return Duration.of(duration, ChronoUnit.NANOS); 
+    } 
+}
+	
+2. Open for Extension, Closed for Modification
+
+	“Software entities (classes, modules, functions, etc.) should be open for extension, but closed for modification.”
+	- The general idea of this principle is great. It tells you to write your code so that you will be able to add new functionality without changing the existing code. That prevents situations in which a change to one of your classes also requires you to adapt all depending classes
+	- A class is closed, since it may be compiled, stored in a library, baselined, and used by client classes. But it is also open, since any new class may use it as parent, adding new features. When a descendant class is defined, there is no need to change the original or to disturb its clients.”
+	- Open/Closed Principle to the Polymorphic Open/Closed Principle. It uses interfaces instead of superclasses to allow different implementations which you can easily substitute without changing the code that uses them. The interfaces are closed for modifications, and you can provide new implementations to extend the functionality of your software.
+	
+	Ex:- Wrong - Class AreaCalculator {
+		public void calcualteCircleArea() {
+		}
+		public void calcualteTriangleArea() {
+		}
+	}
+
+	Correct - Interface AreaCalculator {
+		void getArea();
+	}
+	Class Circle implements AreaCalculator {
+		
+	}
+	Class Triangle implements AreaCalculator {
+		
+	}
+
+	- Classes should be open for extension, but closed for a modification
+	- In doing so, we stop ourselves from modifying the existing code and causing potential bugs
+	- Exception to the rule is fixing the bugs
+	- EX:
+	imagine we've implemented a Guitar class.
+
+	It's fully fledged and even has a volume knob:
+
+	public class Guitar {
+
+		private String make;
+		private String model;
+		private int volume;
+
+		//Constructors, getters & setters
+	}
+	We launch the application, and everyone loves it. However, after a few months, we decide the Guitar is a little bit boring and could do with an awesome flame pattern to make it look a bit more ‘rock and roll'.
+
+	At this point, it might be tempting to just open up the Guitar class and add a flame pattern – but who knows what errors that might throw up in our application.
+
+	Instead, let's stick to the open-closed principle and simply extend our Guitar class:
+
+	public class SuperCoolGuitarWithFlames extends Guitar {
+
+		private String flameColor;
+
+		//constructor, getters + setters
+	}
+	By extending the Guitar class we can be sure that our existing application won't be affected.
+	
+	
+3. Liskov Substitution
+
+	- Should be able to replace Superclass reference with subclass
+	- replace objects of a parent class with objects of a subclass without breaking the application. This requires all subclasses to behave in the same way as the parent class.
+	- The Liskov Substitution Principle (LSP) states that an instance of a parent class should be replaceable with an instance of a child class without the user knowing the difference or incurring any negative side effects. The LSP guides how inheritance is implemented in the application’s design.
+	- LSP (Liskov Substitution Principle) is a fundamental principle of OOP and states that derived classes should be able to extend their base classes without changing their behavior. In other words, derived classes should be replaceable for their base types, i.e., a reference to a base class should be replaceable with a derived class without affecting the behavior. 
+	-
+	A classic example of violation of the Liskov Substitution Principle is the Rectangle - Square problem. The Square class extends the Rectangle class and assumes that the width and height are equal.
+
+	Consider the following class. The Rectangle class contains two data members -- width and height. There are also three properties -- Height, Width, and Area. While the first two properties set the height and the width of the rectangle, the Area property has a getter that returns the area of the rectangle.
+	
+	class Rectangle {
+	protected int height;
+         public virtual int Width
+        {
+            get
+            {
+                return width;
+            }
+            set
+            {
+                width = value;
+            }
+        }
+        public virtual int Height
+        {
+            get
+            {
+                return height;
+            }
+            set
+            {
+                height = value;
+            }
+        }
+       public int Area
+        {
+            get
+            {
+                return height * width;
+            }
+         }   
+    }
+
+	A Square is a type of rectangle all of whose sides are of equal size, i.e., the width and height of a Square is the same.
+
+	class Square : Rectangle
+    {
+        public override int Width
+        {
+           get
+            {
+                return width;
+            }
+            set
+            {
+                width = value;
+                height = value;
+            }
+        }
+        public override int Height
+        {
+            get
+            {
+                return width;
+            }
+            set
+            {
+                width = value;
+                height = value;
+            }
+        }
+    }
+
+	 Consider another class called ObjectFactory.
+	 class ObjectFactory
+    {
+        public static Rectangle GetRectangleInstance()
+        {
+            return new Square();
+        }
+    }
+
+	Note that the setters for the Width and Height properties in the Square class have been overridden and modified to ensure that the height and width are the same. Let's now create an instance of the Rectangle class using and set its height and width properties.
+
+	Rectangle s = ObjectFactory.GetRectangleInstance();
+	s.Height = 9;
+	s.Width = 8;
+	Console.WriteLine(s.Area);
+
+	The above code snippet when executed would display the value 64 in the console. The expected value is 72 since the width and height mentioned is 9 and 8 respectively. This is a violation of the Liskov Substitution Principle. This is because the Square class that has extended the Rectangle class has modified the behavior. To ensure that the Liskov Substitution Principle is not violated, the Square class can extend the Rectangle class but shouldn't modify the behavior. The behavior has been changed by modifying the setters for both the properties Width and Height. The values of height and width are same if it is a Square -- they shouldn't be the same if it is a Rectangle.
+	
+	
+
+	Let's just jump straight to the code to help wrap our heads around this concept:
+
+	public interface Car {
+
+		void turnOnEngine();
+		void accelerate();
+	}
+	Above, we define a simple Car interface with a couple of methods that all cars should be able to fulfill – turning on the engine, and accelerating forward.
+
+	Let's implement our interface and provide some code for the methods:
+
+	public class MotorCar implements Car {
+
+		private Engine engine;
+
+		//Constructors, getters + setters
+
+		public void turnOnEngine() {
+			//turn on the engine!
+			engine.on();
+		}
+
+		public void accelerate() {
+			//move forward!
+			engine.powerOn(1000);
+		}
+	}
+	As our code describes, we have an engine that we can turn on, and we can increase the power. But wait, its 2019, and Elon Musk has been a busy man.
+
+	We are now living in the era of electric cars:
+
+	public class ElectricCar implements Car {
+
+		public void turnOnEngine() {
+			throw new AssertionError("I don't have an engine!");
+		}
+
+		public void accelerate() {
+			//this acceleration is crazy!
+		}
+	}
+	By throwing a car without an engine into the mix, we are inherently changing the behavior of our program. This is a blatant violation of Liskov substitution and is a bit harder to fix than our previous 2 principles.
+	
+	One possible solution would be to rework our model into interfaces that take into account the engine-less state of our Car.

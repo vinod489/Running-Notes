@@ -1,0 +1,151 @@
+C:\Research_WS\App1>
+¦   pom.xml
+¦
+¦
++---src
+¦   +---main
+¦   ¦   +---java
+¦   ¦       +---com
+¦   ¦           +---satya
+¦   ¦                   ConsumerTestCase.java
+¦   ¦                   ProducerTestCase.java
+¦   ¦
+
+pom.xml
+-------
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>com.satya</groupId>
+	<artifactId>App1</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>jar</packaging>
+
+	<name>App1</name>
+	<url>http://maven.apache.org</url>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>3.8.1</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>javax.jms</groupId>
+			<artifactId>javax.jms-api</artifactId>
+			<version>2.0</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.apache.activemq/artemis-jms-client -->
+		<dependency>
+			<groupId>org.apache.activemq</groupId>
+			<artifactId>artemis-jms-client</artifactId>
+			<version>2.6.3</version>
+		</dependency>
+
+
+
+		<!-- https://mvnrepository.com/artifact/org.wildfly/wildfly-naming-client -->
+		<dependency>
+			<groupId>org.wildfly</groupId>
+			<artifactId>wildfly-naming-client</artifactId>
+			<version>1.0.9.Final</version>
+		</dependency>
+
+	</dependencies>
+</project>
+
+ProducerTestCase.java
+---------------------
+package com.satya;
+
+import java.util.Properties;
+
+import javax.jms.Connection;
+import javax.jms.ConnectionFactory;
+import javax.jms.Destination;
+import javax.jms.MessageProducer;
+import javax.jms.Queue;
+import javax.jms.Session;
+import javax.jms.TextMessage;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+
+public class ProducerTestCase {
+	public static void main(String[] args) throws Exception {
+		Properties props = new Properties();
+
+		props.put(Context.PROVIDER_URL, "http-remoting://localhost:8080");
+		props.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
+		props.put(Context.SECURITY_PRINCIPAL, "jmsuser");
+		props.put(Context.SECURITY_CREDENTIALS, "interOP@123");
+
+		Context jndiContext = new InitialContext(props);
+		ConnectionFactory connectionFactory = (ConnectionFactory) jndiContext.lookup("jms/RemoteConnectionFactory");
+		Destination destination = (Queue) jndiContext.lookup("jms/queue/TestQ");
+		Connection connection = connectionFactory.createConnection("jmsuser", "interOP@123");
+		connection.start();
+		Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+		MessageProducer producer = session.createProducer(destination);
+		TextMessage textMessage = session.createTextMessage("Hello SatyaNarayana! JMS is working on JBOSS EAP 7.1 ");
+		producer.send(textMessage);
+		session.close();
+		connection.close();
+
+	}
+}
+
+ConsumerTestCase.java
+---------------------
+package com.satya;
+
+import java.util.Properties;
+
+import javax.jms.Connection;
+import javax.jms.ConnectionFactory;
+import javax.jms.Destination;
+import javax.jms.Message;
+import javax.jms.MessageConsumer;
+import javax.jms.Queue;
+import javax.jms.Session;
+import javax.jms.TextMessage;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+
+public class ConsumerTestCase {
+	public static void main(String[] args) throws Exception {
+		Properties props = new Properties();
+		props.put(Context.PROVIDER_URL, "http-remoting://localhost:8080");
+		props.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
+		props.put(Context.SECURITY_PRINCIPAL, "jmsuser");
+		props.put(Context.SECURITY_CREDENTIALS, "interOP@123");
+
+		Context jndiContext = new InitialContext(props);
+		ConnectionFactory connectionFactory = (ConnectionFactory) jndiContext.lookup("jms/RemoteConnectionFactory");
+		Destination destination = (Queue) jndiContext.lookup("jms/queue/TestQ");
+		Connection connection = connectionFactory.createConnection("jmsuser", "interOP@123");
+		connection.start();
+		Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+		MessageConsumer consumer = session.createConsumer(destination);
+		System.out.println("trying to receive the message");
+
+		Message message = consumer.receive(3000);
+
+		if (message instanceof TextMessage) {
+			TextMessage textMessage = (TextMessage) message;
+			String text = textMessage.getText();
+			System.out.println("received the text message:" + text);
+			System.out.println("Received:" + text);
+		} else {
+			System.out.println("received:" + message);
+		}
+		session.close();
+		connection.close();
+
+	}
+}

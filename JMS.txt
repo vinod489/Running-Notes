@@ -10,5 +10,34 @@ Oracle AQ - Oracle advance queueing - weblogic server
 RabbitMQ - AMQP - Advanced Message queueing protocol
 Apache Kafka - open source distributed event streaming platform
 
-JMS vs Java Mail - Java Mail API is to send email with attachments - send emails - read emails 
+JMS vs Java Mail - Java Mail API is to send email with attachments - send emails - read emails  - application to application
 				  - To send emails we need mail server API - Its a messaging between human to human
+				  
+
+Message is a communication between two distributed systems
+Advantages of JMS is reduce system bottle necks, reliability of message delivery, scalability
+
+Microservices communicate with each other synchronously using Http.
+To communicate asynchronously we use JMS
+
+JMS Components
+
+	- JMS Provider - Message system MOM implements JMS
+	- JMS Clients - Which consumes messages
+	- JMS Application - system contains more jms clients and one jms provider
+	
+Models to Models
+	- Ponit to Point - built around Queues
+					 - First in first out
+					 - One to One
+					 - Many to One
+					 - One to Many
+					 - Many to Many
+					 - Each Message has only one consumer
+					 - Recevier will send acknowledgement to Queue
+	- Publish and Subscribe - Durable - Presistent message store
+							- Non Durable - Messages will not persist
+							- Each Message has many consumers
+							- Message will be send to a destination name as topic
+							- A client that subscribes to a topic can consume only messages published after client has created a subscription, and the subscriber must continue to be active in order for it to consume messages
+							- No acknowledgement

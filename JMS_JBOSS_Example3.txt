@@ -1,0 +1,415 @@
+JMS Web Application for JBOSS EAP 7.1/7.2 active mq using spring xml files using jmsTemplate
+
+C:\springws\JMSTemplateApp>
+│   pom.xml
+├───src
+│   ├───main
+│   │   ├───java
+│   │   │   └───com
+│   │   │       └───satya
+│   │   │           └───spring
+│   │   │               └───jmstemplate
+│   │   │                   ├───bean
+│   │   │                   │       JMSConsumer.java
+│   │   │                   │       JMSProducer.java
+│   │   │                   │
+│   │   │                   └───servlet
+│   │   │                           ConsumerServlet.java
+│   │   │                           ProducerServlet.java
+│   │   │
+│   │   ├───resources
+│   │   │       spring.xml
+│   │   │
+│   │   └───webapp
+│   │       │   index.jsp
+│   │       │
+│   │       └───WEB-INF
+│   │               web.xml
+│   │
+│   └───test
+│       └───java
+└───target
+    │   JMSTemplateApp.war
+    │
+    ├───classes
+    │   │   spring.xml
+    │   │
+    │   └───com
+    │       └───satya
+    │           └───spring
+    │               └───jmstemplate
+    │                   ├───bean
+    │                   │       JMSConsumer.class
+    │                   │       JMSProducer$1.class
+    │                   │       JMSProducer.class
+    │                   │
+    │                   └───servlet
+    │                           ConsumerServlet.class
+    │                           ProducerServlet.class
+    │
+
+	
+    │               javax.jms-api-2.0.1.jar
+    │               spring-aop-5.1.3.RELEASE.jar
+    │               spring-beans-5.1.3.RELEASE.jar
+    │               spring-context-5.1.3.RELEASE.jar
+    │               spring-core-5.1.3.RELEASE.jar
+    │               spring-expression-5.1.3.RELEASE.jar
+    │               spring-jcl-5.1.3.RELEASE.jar
+    │               spring-jms-5.1.3.RELEASE.jar
+    │               spring-messaging-5.1.3.RELEASE.jar
+    │               spring-tx-5.1.3.RELEASE.jar
+
+
+
+
+pom.xml
+-------
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.satya.spring.apps</groupId>
+	<artifactId>JMSTemplateApp</artifactId>
+	<packaging>war</packaging>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>JMSTemplateApp Maven Webapp</name>
+	<url>http://maven.apache.org</url>
+	<dependencies>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>3.8.1</version>
+			<scope>test</scope>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/javax.servlet/javax.servlet-api -->
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>javax.servlet-api</artifactId>
+			<version>3.1.0</version>
+			<scope>provided</scope>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.springframework/spring-context -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-context</artifactId>
+			<version>5.1.3.RELEASE</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.springframework/spring-core -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-core</artifactId>
+			<version>5.1.3.RELEASE</version>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/javax.jms/javax.jms-api -->
+		<dependency>
+			<groupId>javax.jms</groupId>
+			<artifactId>javax.jms-api</artifactId>
+			<version>2.0.1</version>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/org.springframework/spring-jms -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-jms</artifactId>
+			<version>5.1.3.RELEASE</version>
+		</dependency>
+	</dependencies>
+	<build>
+		<finalName>JMSTemplateApp</finalName>
+	</build>
+</project>
+
+spring.xml
+----------
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	
+	<bean id="connectionFactory"
+		class="org.springframework.jndi.JndiObjectFactoryBean">
+		<property name="jndiName"
+			value="java:jboss/exported/jms/RemoteConnectionFactory" />
+	</bean>
+	<bean id="destination"
+		class="org.springframework.jndi.JndiObjectFactoryBean">
+		<property name="jndiName"
+			value="java:jboss/exported/jms/queue/TestQ1" />
+	</bean>
+	
+	
+	<bean id="credentialsconnectionfactory"
+		class="org.springframework.jms.connection.UserCredentialsConnectionFactoryAdapter">
+		<property name="targetConnectionFactory"
+			ref="connectionFactory" />
+		<property name="username" value="jmssatya" />
+		<property name="password" value="satya@1" />
+	</bean>
+
+	<bean id="jmsTemplate"
+		class="org.springframework.jms.core.JmsTemplate">
+		<property name="connectionFactory"
+			ref="credentialsconnectionfactory" />
+	</bean>
+
+
+	<bean id="jmsProducer"
+		class="com.satya.spring.jmstemplate.bean.JMSProducer">
+		<property name="destination" ref="destination" />
+		<property name="jmsTemplate" ref="jmsTemplate" />
+	</bean>
+	<bean id="jmsConsumer"
+		class="com.satya.spring.jmstemplate.bean.JMSConsumer">
+		<property name="destination" ref="destination" />
+		<property name="jmsTemplate" ref="jmsTemplate" />
+	</bean>
+
+
+	<!-- 
+	<bean id="destination" factory-bean="jndiContext"
+		factory-method="lookup">
+		<constructor-arg
+			value="java:jboss/exported/jms/queue/TestQ1" />
+	</bean>
+	
+	<bean id="jndiContext" class="javax.naming.InitialContext">
+	</bean>
+	
+	
+	<bean id="connectionFactory" factory-bean="jndiContext" factory-method="lookup"> 
+		<constructor-arg value="java:jboss/exported/jms/RemoteConnectionFactory" 
+		/> </bean> -->
+
+	<!-- <bean id="jnditemplate"
+		class="org.springframework.jndi.JndiTemplate">
+		<property name="environment">
+			<props>
+				<prop key="java.naming.factory.initial">org.wildfly.naming.client.WildFlyInitialContextFactory</prop>
+				<!-- org.jboss.naming.remote.client.InitialContextFactory -->
+				<prop key="java.naming.provider.url">http-remoting://localhost:8080</prop>
+				<prop key="java.naming.security.principal">jmssatya</prop>
+				<prop key="java.naming.security.credentials">satya@1</prop>
+			</props>
+		</property>
+	</bean>
+	<bean id="connectionFactory"
+		class="org.springframework.jndi.JndiObjectFactoryBean">
+		<property name="jndiTemplate" ref="jnditemplate" />
+		<property name="jndiName" value="jms/RemoteConnectionFactory" />
+	</bean>
+	<bean id="destination"
+		class="org.springframework.jndi.JndiObjectFactoryBean">
+		<property name="jndiTemplate" ref="jnditemplate" />
+		<property name="jndiName" value="jms/queue/TestQ1" />
+	</bean>
+
+	<bean id="credentialsconnectionfactory"	class="org.springframework.jms.connection.UserCredentialsConnectionFactoryAdapter">
+		<property name="targetConnectionFactory" ref="connectionFactory" />
+		<property name="username" value="jmssatya" />
+		<property name="password" value="satya@1" />
+	</bean>
+
+	<bean id="jmsTemplate" class="org.springframework.jms.core.JmsTemplate">
+		<property name="connectionFactory"	ref="credentialsconnectionfactory" />
+	</bean>
+
+	<bean id="jmsProducer"	class="com.satya.spring.jmstemplate.bean.JMSProducer">
+		<property name="destination" ref="destination" />
+		<property name="jmsTemplate" ref="jmsTemplate" />
+	</bean>
+	<bean id="jmsConsumer"	class="com.satya.spring.jmstemplate.bean.JMSConsumer">
+		<property name="destination" ref="destination" />
+		<property name="jmsTemplate" ref="jmsTemplate" />
+	</bean> -->
+
+</beans>
+
+JMSConsumer.java
+----------------
+package com.satya.spring.jmstemplate.bean;
+
+import javax.jms.Destination;
+import javax.jms.JMSException;
+import javax.jms.TextMessage;
+
+import org.springframework.jms.core.JmsTemplate;
+
+public class JMSConsumer {
+	private JmsTemplate jmsTemplate;
+	private Destination destination;
+
+	public JmsTemplate getJmsTemplate() {
+		return jmsTemplate;
+	}
+
+	public void setJmsTemplate(JmsTemplate jmsTemplate) {
+		this.jmsTemplate = jmsTemplate;
+	}
+
+	public Destination getDestination() {
+		return destination;
+	}
+
+	public void setDestination(Destination destination) {
+		this.destination = destination;
+	}
+
+	public String receiveMessage(){
+		String msg = null;
+		try {
+			TextMessage textMessage = (TextMessage) jmsTemplate.receive(destination);
+			msg = textMessage.getText();
+		} catch (JMSException e) {
+			e.printStackTrace();
+			
+		}
+		return msg;
+	}
+}
+
+JMSProducer.java
+-----------------
+package com.satya.spring.jmstemplate.bean;
+
+import javax.jms.Destination;
+import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.jms.Session;
+
+import org.springframework.jms.core.JmsTemplate;
+import org.springframework.jms.core.MessageCreator;
+
+public class JMSProducer {
+	private JmsTemplate jmsTemplate;
+	private Destination destination;
+	public JmsTemplate getJmsTemplate() {
+		return jmsTemplate;
+	}
+	public void setJmsTemplate(JmsTemplate jmsTemplate) {
+		this.jmsTemplate = jmsTemplate;
+	}
+	public Destination getDestination() {
+		return destination;
+	}
+	public void setDestination(Destination destination) {
+		this.destination = destination;
+	}
+	public void sendMessage(final String msg) {
+		        System.out.println("Producer sends " + msg);
+		        jmsTemplate.send(destination, new MessageCreator() {
+		            public Message createMessage(Session session) throws JMSException {
+		                return session.createTextMessage(msg);
+		            }});       
+		    }
+}
+
+ConsumerServlet.java
+--------------------
+package com.satya.spring.jmstemplate.servlet;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.context.support.AbstractApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import com.satya.spring.jmstemplate.bean.JMSConsumer;
+
+@WebServlet("/consumer")
+public class ConsumerServlet extends HttpServlet {
+	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+
+		PrintWriter pw = response.getWriter();
+
+		AbstractApplicationContext context = new ClassPathXmlApplicationContext("spring.xml");
+
+		JMSConsumer consumer = context.getBean("jmsConsumer", JMSConsumer.class);
+
+		String msg = consumer.receiveMessage();
+		
+		pw.println("received msg from q:" + msg);
+		
+		context.close();
+
+	}
+}
+
+ProducerServlet.java
+--------------------
+package com.satya.spring.jmstemplate.servlet;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.context.support.AbstractApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import com.satya.spring.jmstemplate.bean.JMSProducer;
+
+@WebServlet("/producer")
+public class ProducerServlet extends HttpServlet {
+	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		String msg = request.getParameter("msg");
+		PrintWriter pw = response.getWriter();
+		
+		AbstractApplicationContext context = new ClassPathXmlApplicationContext("spring.xml");
+		
+		JMSProducer producer = context.getBean("jmsProducer", JMSProducer.class);
+		
+		producer.sendMessage(msg);
+		
+		pw.println(msg + "message produced");
+		context.close();
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

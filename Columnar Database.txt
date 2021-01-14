@@ -1,0 +1,44 @@
+Columnar database
+
+ -> the way data stored in a disk is different for columnar database
+ -> In RDBMS data will be stored in record wise. Its like per one block of hard disk one row will be saved
+ -> In Columnar database the data of a column of all rows will be stored in block
+ 
+Ex:- User details
+Id Name Age D.O.B
+1   A    20  1990
+2   B    30  2000
+
+Here in RDBMS data will be stored in 1,A,20,1990 in one block of hard disk and 2,B,30,2000 in another block of harddisk
+When we want to read a data record wise.it will first read first block and then second block. Here we need all the details of user so it is needed to read the entire block and entire hardisk.
+If a new record is created, a new record will be inserted into a block in one write operation
+
+Suppose if we want to plot a graph between D.O.B and sum(age) - Here we need only age and D.O.B
+If data is stored in a RDBMS way we have to get data from all blocks of hard disk
+
+In columnar database data will be stored in Id data - 1,2 in one block, A,B in another block, 20,30 in another block and 1990,2000 in another block
+If we want a data of sum(age) we just need to iterate a age block and get the data. No need to scan the entire hard disk
+If a new record is created with 3,C,25,1995 a four write operations will be performed to write Id value to one block, name to another block
+--> So columnar database is not effective for frequent write operations system. It is suitable for analaytics query and historical data
+
+
+When same types of data is stored in a block, compression can be applied and can save the size of hard disk
+
+When a record is saved in a block, even there is a space remains in that block we cant store another record - So a space wastage
+In columnar database, if a space is left in a block, another record column data can be stored there - So a space effective
+ 
+ 
+How hard drives work
+Hard disk drives consist of one or more magnetically-sensitive platters, an actuator arm with a read/write head on it for each platter, and a motor to spin the platters and move the arms. There is also an I/O controller and firmware that tells the hardware what to do and communicates with the rest of the system.
+
+Each platter is organized into concentric circles called tracks. Tracks are divided into logical units called sectors. Each track and sector number results in a unique address that can be used to organize and locate data. Data is written to the nearest available area. There is an algorithm that processes the data before it’s written, allowing the firmware to detect and correct errors.
+
+The platters spin at preset speeds (4200 rpm to 7200 rpm for consumer computers). Those speeds correlate to read/write rates. The higher the preset speed, the faster a hard drive will be able to read and write data.
+
+Reading and writing
+Each time you ask your computer to retrieve or update data, the I/O controller tells the actuator arm where that data is located, and the read/write head gathers the data by reading the presence or absence of a charge in each address. If the request was to update the data, the read/write head changes the charge on the affected track and sector.
+
+The time it takes for the platter to spin and the actuator arm to find the correct track and sector is known as latency.
+
+
+Buffer pool is stored in RAM

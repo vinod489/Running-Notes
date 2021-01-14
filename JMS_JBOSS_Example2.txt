@@ -1,0 +1,254 @@
+JMS Web Application for JBOSS EAP 7.1 active mq using spring xml files
+
+C:\springws\JMSWebSpringApp>
+│   pom.xml
+│
+│
+├───src
+│   ├───main
+│   │   ├───java
+│   │   │   └───com
+│   │   │       └───satya
+│   │   │           └───spring
+│   │   │               ├───servlet
+│   │   │               │       Consumer.java
+│   │   │               │       Producer.java
+│   │   │               │
+│   │   │               └───test
+│   │   │                       Test.java
+│   │   │
+│   │   ├───resources
+│   │   │       spring.xml
+│   │   │       spring2.xml
+│   │   │
+│   │   └───webapp
+│   │       │   index.jsp
+│   │       │
+│   │       └───WEB-INF
+│   │               web.xml
+│   │
+│   └───test
+│       └───java
+
+pom.xml
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.satya.spring.apps</groupId>
+	<artifactId>JMSWebSpringApp</artifactId>
+	<packaging>war</packaging>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>JMSWebSpringApp Maven Webapp</name>
+	<url>http://maven.apache.org</url>
+	<dependencies>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>3.8.1</version>
+			<scope>test</scope>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/javax.servlet/javax.servlet-api -->
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>javax.servlet-api</artifactId>
+			<version>3.1.0</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/org.springframework/spring-core -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-core</artifactId>
+			<version>5.1.3.RELEASE</version>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/org.springframework/spring-context -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-context</artifactId>
+			<version>5.1.3.RELEASE</version>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/org.apache.activemq/activemq-all -->
+		<dependency>
+			<groupId>org.apache.activemq</groupId>
+			<artifactId>activemq-all</artifactId>
+			<version>5.15.8</version>
+		</dependency>
+
+	</dependencies>
+	<build>
+		<finalName>JMSWebSpringApp</finalName>
+	</build>
+</project>
+
+spring.xml
+----------
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+
+	<bean id="jndiContext" class="javax.naming.InitialContext">
+	</bean>
+
+    <bean id="destination" factory-bean="jndiContext"
+		factory-method="lookup">
+		<constructor-arg
+			value="java:jboss/exported/jms/queue/TestQ1" />
+	</bean>
+	
+	<bean id="connectionFactory" factory-bean="jndiContext"	factory-method="lookup">
+		<constructor-arg
+			value="java:jboss/exported/jms/RemoteConnectionFactory" />
+	</bean>
+	
+
+	<bean id="connection" factory-bean="connectionFactory"
+		factory-method="createConnection">
+		<constructor-arg value="jmssatya" />
+		<constructor-arg value="satya@1" />
+	</bean>
+
+	
+</beans>
+
+spring2.xml
+-----------
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+
+
+	<bean id="connectionFactory"
+		class="org.springframework.jndi.JndiObjectFactoryBean">
+		<property name="jndiName"
+			value="java:jboss/exported/jms/RemoteConnectionFactory" />
+	</bean>
+	
+	<bean id="destination"
+		class="org.springframework.jndi.JndiObjectFactoryBean">
+		<property name="jndiName"
+			value="java:jboss/exported/jms/queue/TestQ1" />
+	</bean>
+
+	<bean id="connection" factory-bean="connectionFactory"
+		factory-method="createConnection">
+		<constructor-arg value="jmssatya" />
+		<constructor-arg value="satya@1" />
+	</bean>
+
+	
+
+</beans>
+
+
+
+Producer.java
+-------------
+package com.satya.spring.servlet;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+
+import javax.jms.Connection;
+import javax.jms.Destination;
+import javax.jms.JMSException;
+import javax.jms.MessageProducer;
+import javax.jms.Session;
+import javax.jms.TextMessage;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.context.support.AbstractApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+@WebServlet("/producer")
+public class Producer  extends HttpServlet{
+	public void doGet(HttpServletRequest request, HttpServletResponse response)throws ServletException, IOException {
+		PrintWriter pw = response.getWriter();
+		String msg = request.getParameter("msg");
+		
+		
+		AbstractApplicationContext context = new ClassPathXmlApplicationContext("spring2.xml");
+		//AbstractApplicationContext context = new ClassPathXmlApplicationContext("spring.xml"); this one also works
+		
+		Connection connection = context.getBean("connection", Connection.class);	
+		Destination destination = context.getBean("destination", Destination.class);
+		
+		try {
+			connection.start();
+			Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+			MessageProducer producer = session.createProducer(destination);
+			TextMessage textMessage = session.createTextMessage(msg);
+			producer.send(textMessage);
+			connection.close();
+			pw.println("message produced");
+		} catch (JMSException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+}
+
+Consumer.java
+-------------
+package com.satya.spring.servlet;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+
+import javax.jms.Connection;
+import javax.jms.Destination;
+import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.jms.MessageConsumer;
+import javax.jms.Session;
+import javax.jms.TextMessage;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.context.support.AbstractApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+@WebServlet("/consumer")
+public class Consumer extends HttpServlet {
+	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		PrintWriter pw = response.getWriter();
+		
+		AbstractApplicationContext context = new ClassPathXmlApplicationContext("spring.xml");
+		
+		Connection connection = context.getBean("connection", Connection.class);
+		Destination destination = context.getBean("destination", Destination.class);
+		
+		
+		try {
+			connection.start();
+			Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+			MessageConsumer consumer = session.createConsumer(destination);
+			System.out.println("trying to receive the message");
+			Message message = consumer.receive(5000);
+			if (message instanceof TextMessage) {
+				TextMessage textMessage = (TextMessage) message;
+				String text = textMessage.getText();
+				pw.println("received the text message:" + text);
+				System.out.println("Received:" + text);
+			} else {
+				System.out.println("received:" + message);
+			}
+			connection.close();
+		} catch (JMSException e) {
+			// TODO Auto-generated catch block
+
+			e.printStackTrace();
+		}
+	}
+}

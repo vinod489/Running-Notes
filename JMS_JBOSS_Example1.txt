@@ -1,0 +1,439 @@
+Download jboss eap zip
+
+Extact jboss eap zip
+
+web-application example tested on JBOSS EAP 7.1
+================================================
+
+adding a queue to jms/activemq subsystem
+----------------------------------------
+
+Step-1: start jboss server with jms subsystem
+------
+as we know jms susbstem details are avilable in full.xml 
+so two ways
+
+1st way:
+take backup of standalone.xml to standalone.xml.backup
+and copy all the content from standalone-full.xml to standalone.xml
+or
+2nd way: 
+edit standalone.conf.bat
+
+below this line 
+set "JAVA_OPTS=-Xms1G -Xmx1G -XX:MetaspaceSize=96M -XX:MaxMetaspaceSize=256m"
+add the below line
+set "JAVA_OPTS=%JAVA_OPTS% -Djboss.server.default.config=standalone-full.xml"
+
+Start JBoss EAP 7 server
+C:\RedHat\jboss-eap-7.2\bin>standalone.bat
+
+step-2: adding a user to jboss
+
+• Run add-user.bat/add-user.sh file from JBoss-EAP-7.0/bin
+here you need to add new application user. Let your:
+
+for adminstation purpose use Management user, user group as admin.
+for admin purpse username: satya
+
+for application purpose  use Applciation user, user group as guest.
+
+What type of user do you wish to add? 
+ a) Management User (mgmt-users.properties) 
+ b) Application User (application-users.properties)
+(a): b
+
+username: jmssatya, password: satya@1, user role: guest
+
+Setp-3 Creating a simple JMS Queue using the JBoss CLI command line utility.
+
+ NOTE the JNDI name should contain “java:/jboss/exported” prefix or else the JMS queue will can not be looked up remotely. 
+ let here your queue name is TestQ
+
+linux:
+$ cd /PATH/TO/JBoss-eap-7.0/bin
+$ ./jboss-cli.sh -c
+
+for windows
+jboss-cli.bat -c
+
+promptname:
+[standalone@localhost:9990 /]
+
+command to type: /subsystem=messaging-activemq/server=default/jms-queue=TestQ/:add(entries=["java:jboss/exported/jms/queue/TestQ"])
+ 
+ output:
+  {"outcome" => "success"}
+
+[standalone@localhost:9990 /] :reload
+
+  {
+    "outcome" => "success",
+    "result" => undefined
+  }
+  
+ step-4 now check your standalone.xml/standalone-full.xml file, whether below xml code generated or not, if not generated then copy the below code and paste it.
+ 
+ <jms-queue name="TestQ" entries="java:/jboss/exported/jms/queue/TestQ"/>
+ under:
+ 
+ pom.xml
+ -------
+ <project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.satya.spring.apps</groupId>
+	<artifactId>JMSApp</artifactId>
+	<packaging>war</packaging>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>JMSApp Maven Webapp</name>
+	<url>http://maven.apache.org</url>
+	<dependencies>
+		<!-- https://mvnrepository.com/artifact/javax.servlet/javax.servlet-api -->
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>javax.servlet-api</artifactId>
+			<version>3.1.0</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/javax.servlet.jsp/jsp-api -->
+		<dependency>
+			<groupId>javax.servlet.jsp</groupId>
+			<artifactId>jsp-api</artifactId>
+			<version>2.2.1-b03</version>
+			<scope>provided</scope>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/javax.jms/javax.jms-api -->
+		<dependency>
+			<groupId>javax.jms</groupId>
+			<artifactId>javax.jms-api</artifactId>
+			<version>2.0.1</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.apache.activemq/artemis-jms-client -->
+		<dependency>
+			<groupId>org.apache.activemq</groupId>
+			<artifactId>artemis-jms-client</artifactId>
+			<version>2.6.3</version>
+		</dependency>
+
+
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>3.8.1</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+	<build>
+		<finalName>JMSApp</finalName>
+	</build>
+</project>
+web.xml
+-------
+<!DOCTYPE web-app PUBLIC
+ "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+ "http://java.sun.com/dtd/web-app_2_3.dtd" >
+
+<web-app>
+  <display-name>Archetype Created Web Application</display-name>
+  <servlet>
+  	<servlet-name>Producer1</servlet-name>
+  	<display-name>Producer1</display-name>
+  	<description></description>
+  	<servlet-class>com.satya.spring.jms.Producer1</servlet-class>
+  </servlet>
+  <servlet>
+  	<servlet-name>Producer2</servlet-name>
+  	<display-name>Producer2</display-name>
+  	<description></description>
+  	<servlet-class>com.satya.spring.jms.Producer2</servlet-class>
+  </servlet>
+  <servlet>
+  	<servlet-name>Consumer1</servlet-name>
+  	<display-name>Consumer1</display-name>
+  	<description></description>
+  	<servlet-class>com.satya.spring.jms.Consumer1</servlet-class>
+  </servlet>
+  <servlet>
+  	<servlet-name>Consumer2</servlet-name>
+  	<display-name>Consumer2</display-name>
+  	<description></description>
+  	<servlet-class>com.satya.spring.jms.Consumer2</servlet-class>
+  </servlet>
+  <servlet-mapping>
+  	<servlet-name>Producer1</servlet-name>
+  	<url-pattern>/producer1</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+  	<servlet-name>Producer2</servlet-name>
+  	<url-pattern>/producer2</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+  	<servlet-name>Consumer1</servlet-name>
+  	<url-pattern>/consumer1</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+  	<servlet-name>Consumer2</servlet-name>
+  	<url-pattern>/consumer2</url-pattern>
+  </servlet-mapping>
+</web-app>
+
+Producer1.java
+--------------
+package com.satya.spring.jms;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+
+import javax.jms.Connection;
+import javax.jms.ConnectionFactory;
+import javax.jms.Destination;
+import javax.jms.JMSException;
+import javax.jms.MessageProducer;
+import javax.jms.Queue;
+import javax.jms.Session;
+import javax.jms.TextMessage;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+public class Producer1 extends HttpServlet {
+	private static final long serialVersionUID = 1L;
+
+	protected void doGet(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		PrintWriter pw = response.getWriter();
+
+		try {
+			Context jndiContext = new InitialContext();
+			String msg = request.getParameter("msg");
+
+			Destination destination = (Queue) jndiContext.lookup("java:jboss/exported/jms/queue/TestQ1");
+			
+			ConnectionFactory connectionFactory = (ConnectionFactory) jndiContext
+					.lookup("java:jboss/exported/jms/RemoteConnectionFactory");
+					
+//			ConnectionFactory connectionFactory = (ConnectionFactory) jndiContext.lookup("ConnectionFactory");
+
+			Connection connection = connectionFactory.createConnection("jmssatya", "satya@1");
+			connection.start();
+
+			Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+			MessageProducer producer = session.createProducer(destination);
+			TextMessage textMessage = session.createTextMessage(msg);
+			producer.send(textMessage);
+			session.close();
+			connection.close();
+			jndiContext.close();
+			pw.println("message has been sent on the destination:" + destination);
+		} catch (NamingException e) {
+			e.printStackTrace(pw);
+		} catch (JMSException e) {
+			e.printStackTrace(pw);
+		}
+
+	}
+
+}
+Producer2.java
+--------------
+package com.satya.spring.jms;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Properties;
+
+import javax.jms.Connection;
+import javax.jms.ConnectionFactory;
+import javax.jms.Destination;
+import javax.jms.JMSException;
+import javax.jms.MessageProducer;
+import javax.jms.Queue;
+import javax.jms.Session;
+import javax.jms.TextMessage;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+public class Producer2 extends HttpServlet {
+	private static final long serialVersionUID = 1L;
+
+	protected void doGet(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		PrintWriter pw = response.getWriter();
+		Properties props = new Properties();
+		props.put(Context.PROVIDER_URL, "http-remoting://localhost:8080");
+		props.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
+		// org.jboss.naming.remote.client.InitialContextFactory
+		props.put(Context.SECURITY_PRINCIPAL, "jmssatya");
+		props.put(Context.SECURITY_CREDENTIALS, "satya@1");
+
+		try {
+			Context jndiContext = new InitialContext(props);
+			ConnectionFactory connectionFactory = (ConnectionFactory) jndiContext.lookup("jms/RemoteConnectionFactory");
+			Destination destination = (Queue) jndiContext.lookup("jms/queue/TestQ");
+			Connection connection = connectionFactory.createConnection("jmssatya", "satya@1");
+			connection.start();
+			Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+			MessageProducer producer = session.createProducer(destination);
+			TextMessage textMessage = session.createTextMessage("Hello! JMS is working on JBOSS EAP 7.1 ");
+			producer.send(textMessage);
+			session.close();
+			connection.close();
+			pw.println("message has been sent on the destination:");
+		} catch (NamingException e) {
+			e.printStackTrace(pw);
+		} catch (JMSException e) {
+			e.printStackTrace(pw);
+		}
+
+	}
+
+}
+
+Consumer1.java
+--------------
+package com.satya.spring.jms;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+
+import javax.jms.Connection;
+import javax.jms.ConnectionFactory;
+import javax.jms.Destination;
+import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.jms.MessageConsumer;
+import javax.jms.Queue;
+import javax.jms.Session;
+import javax.jms.TextMessage;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+public class Consumer1 extends HttpServlet {
+	private static final long serialVersionUID = 1L;
+
+	protected void doGet(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		PrintWriter pw = response.getWriter();
+		System.out.println("started");
+		try {
+			Context jndiContext = new InitialContext();
+
+			Destination destination = (Queue) jndiContext.lookup("java:jboss/exported/jms/queue/TestQ1");
+			ConnectionFactory connectionFactory = (ConnectionFactory) jndiContext
+					.lookup("java:jboss/exported/jms/RemoteConnectionFactory");
+//			ConnectionFactory connectionFactory = (ConnectionFactory) jndiContext.lookup("ConnectionFactory");
+			Connection connection = connectionFactory.createConnection("jmssatya", "satya@1");
+			connection.start();
+			Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+			MessageConsumer consumer = session.createConsumer(destination);
+
+			System.out.println("trying to receive the message");
+			Message message = consumer.receive(5000);
+			if (message instanceof TextMessage) {
+				TextMessage textMessage = (TextMessage) message;
+				String text = textMessage.getText();
+				pw.println("received the text message:" + text);
+				System.out.println("Received:" + text);
+			} else {
+				System.out.println("received:" + message);
+			}
+
+			session.close();
+			connection.close();
+			jndiContext.close();
+		} catch (NamingException e) {
+			e.printStackTrace(pw);
+		} catch (JMSException e) {
+			e.printStackTrace(pw);
+		}
+	}
+
+}
+
+Consumer2.java
+--------------
+package com.satya.spring.jms;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Properties;
+
+import javax.jms.Connection;
+import javax.jms.ConnectionFactory;
+import javax.jms.Destination;
+import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.jms.MessageConsumer;
+import javax.jms.Queue;
+import javax.jms.Session;
+import javax.jms.TextMessage;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+public class Consumer2 extends HttpServlet {
+	private static final long serialVersionUID = 1L;
+	protected void doGet(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		PrintWriter pw = response.getWriter();
+		System.out.println("started");
+		Properties props = new Properties();
+		props.put(Context.PROVIDER_URL, "http-remoting://localhost:8080");
+		props.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
+		// org.jboss.naming.remote.client.InitialContextFactory
+		props.put(Context.SECURITY_PRINCIPAL, "jmssatya");
+		props.put(Context.SECURITY_CREDENTIALS, "satya@1");
+
+		try {
+			Context jndiContext = new InitialContext(props);
+			ConnectionFactory connectionFactory = (ConnectionFactory) jndiContext.lookup("jms/RemoteConnectionFactory");
+			Destination destination = (Queue) jndiContext.lookup("jms/queue/TestQ");
+			Connection connection = connectionFactory.createConnection("jmssatya", "satya@1");
+			connection.start();
+			Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+			MessageConsumer consumer = session.createConsumer(destination);
+			System.out.println("trying to receive the message");
+
+			Message message = consumer.receive(3000);
+//			MyMessageListener myMessageListener = new MyMessageListener();
+//			consumer.setMessageListener(myMessageListener);
+
+			if (message instanceof TextMessage) {
+				TextMessage textMessage = (TextMessage) message;
+				String text = textMessage.getText();
+				pw.println("received the text message:" + text);
+				pw.println("Received:" + text);
+			} else {
+				pw.println("received:" + message);
+			}
+			session.close();
+			connection.close();
+		} catch (NamingException e) {
+			e.printStackTrace();
+		} catch (JMSException e) {
+			e.printStackTrace();
+		}
+
+	}
+}

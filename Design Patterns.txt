@@ -37,7 +37,7 @@ Design Smells
 - Hard to read, breaks easily, hard to maintain
 
 Programming to interface
-	- Interface is like a contract. what a client uses
+	- Interface is like a contract. what a client uses3
 
 - Using Composition over inheritance
 - Delegation Priniciples

@@ -13,3 +13,10 @@ Where pods are located
 		-> kind - Whta kind og object you want to create (Pod/service..)
 		-> metdata - Data helps uniquely identifying the object
 		-> spec - desired state of object
+		
+		
+Create a Service before its corresponding backend workloads (Deployments or ReplicaSets), and before any workloads that need to access it. When Kubernetes starts a container, it provides environment variables pointing to all the Services which were running when the container was started. For example, if a Service named foo exists, all containers will get the following variables in their initial environment:
+
+FOO_SERVICE_HOST=<the host the Service is running on>
+FOO_SERVICE_PORT=<the port the Service is running on>
+This does imply an ordering requirement - any Service that a Pod wants to access must be created before the Pod itself, or else the environment variables will not be populated. DNS does not have this restriction.

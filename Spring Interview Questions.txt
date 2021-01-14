@@ -1,0 +1,308 @@
+Spring Interview Questions
+Spring Framework Basics-
+- Loose Coupling
+	- Instead of using the direct implementation class we will create an interface for implementation and pass the actual implementation class
+	Ex:- public class ComplexAlgorithmClass {
+		BubbleSortAlgorithm bSort = new BubbleSortAlgorithm();
+		bsort.sort();
+		///Here if we want to change the sorting to QuickSort - We have to modify this class - this is a tightly coupled
+	}
+	
+	---correct ----
+	public interface SortAlgorithm {
+		public int[] sort(int a[]);
+	}
+	public BubbleSortAlgorithm implements SortAlgorithm;
+	public QuickSortAlgorithm implements SortAlgorithm;
+	public MergeSortAlgorithm implements SortAlgorithm;
+	
+	public class ComplexAlgorithmClass {
+		private SortAlgorithm sortAlgorithm;
+		ComplexAlgorithmClass(SortAlgorithm sortAlgorithm) {
+			this.SortAlgorithm = sortAlgorithm;
+		}
+		sortAlgorithm.sort();//loosely coupled
+	}
+	
+- Dependency
+	- ComplexAlgorithmClass depends on SortAlgorithm service
+	- Web layes depends on business layer and business layer depends on data layer
+	- if data layer needs to connect to database - it needs jdbctemplate - datalayer depends on jdbctemplate
+- Dependency Injection
+	- ComplexAlgorithmClass complexAlgorithm = new ComplexAlgorithmClass(new QuickSortAlgorithm()); Doing dependency injection manually
+	- @Component 
+	public class ComplexAlgorithmClass {
+		@AutoWired
+		private SortAlgorithm sortAlgorithm; - spring automotically searches for a bean and autowire to this variable
+	}
+	//spring searches for a bean, identifies the dependencies, create an instance of bean and autowire 
+- Inversion of control
+	- public class ComplexAlgorithmClass {
+		BubbleSortAlgorithm bSort = new BubbleSortAlgorithm();
+		//ComplexAlgorithmClass is responsible to create the instance
+		//ComplexAlgorithmClass has the control to create an instance of BubbleSortAlgorithm;
+	}
+	public class ComplexAlgorithmClass {
+		private SortAlgorithm sortAlgorithm;
+		@AutoWired
+		ComplexAlgorithmClass(SortAlgorithm sortAlgorithm) {
+			this.SortAlgorithm = sortAlgorithm;
+		}
+		//Spring framework takes the responsibility of creating a bean and injects
+		sortAlgorithm.sort();//loosely coupled
+	}
+	//Shifting the control to the users of ComplexAlgorithmClass
+	//Shifting the control to the dependency inject framework
+- AutoWiring
+	- Spring framework finds the bean for the matching dependency and injects the dependency
+	
+Roles of IOC container
+	- Find beans, Identify the dependencies, Autowire the bean, Manage the lifecycle of bean - Creation and Destroy
+	- Application Context and Bean Factory
+	- Bean Factory - find bean, wiring beans and manage life cycle of bean
+	- Application Context - another IOC container which is advanced of bean factory 
+		- provides AOP, 
+		- internationalization, 
+		- webapplication context features 
+			- request,session,requestscope and sessionscope
+	- Spring recommends to use Application Context
+	- Go to Bean Factory only when there is a severe memory constaint
+	- Creatig an ApplicationContext
+		- Can be created by using xml ApplicationContext context = new ClassPathXMLApplicationContext(new String[] {"<xml config files>"});
+			-  looks for xmls in class path
+		- Can be created by using annotation @Configuration to a java configuration class 
+			- ApplicationContext ctx = new AnnotationConfigApplicationContext(SpringContext.class);
+	- UnitTests
+	- @RunWith(SpringJUnit4ClassRunner.class)
+	  @ContextConfiguration(classes SpringContext.class)
+	  public class JUnitTestCases {
+	  }
+	  
+	  @RunWith(SpringJUnit4ClassRunner.class)
+	  @ContextConfiguration(locations={"springcontext.xml"})
+	  public class JUnitTestCases {
+	  }
+	  
+Component Scan - @Component
+	- How spring knows where to search - in the given base packages
+		- @Configuration
+		  @ComponentScan(basePackages = {"com.xx.xx","com.xx.ss"})
+		- Spring doesnt know where to search, it will get to know from basepackages
+		- XML - <context:component-scan basepackages="com.xx.ss"/>
+		- @SpringBootApplication - component scan on the packages these classes are there		  
+		  @RunWith(SpringRunner.class)
+		- @SpringBootTest - component scan on the packages these classes are there
+		- @Component - Spring should manage the bean - creation, auto wiring and destroying
+		- @AutoWired - Spring should find the bean and autowire
+		- @Component - Generic abstraction
+		- @Repository - used at data layer - used for DAO - adds exception translation for JDBC
+		- @Service - used in business layer - Tranasaction Management
+		- @Controller - Controller in MVC pattern
+Scope of bean
+	- Singleton - One instance per SpringContext - default scope
+	- Prototype - New Bean whenever requested
+	- request - One bean per HTTP request
+	- session - One bean per HTTP Session
+	
+- Spring beans are not thread safe by default in a singleton scope
+- Singleton is per isntance per specific class loader - in Gang of four singleton pattern
+- Spring singleton is one instance per Application Context - If multiple applicaton contexts are there in a single JVM we will have multiple bean instances
+
+Setter and Constructor Injection
+- Setter injection - to setter method
+- Use constructor injection for mandatory dependencies and setter injection for optional dependecies
+
+- XML and Java configuration
+- XML
+	- define all beans in <bean></bean>
+	- ApplicationContext ctx = new AnnotationConfigApplicationContext(".xml");
+- Java
+	- @Configuration
+	   class SpringConfigurationClass
+	  ApplicationContext ctx = new AnnotationConfigApplicationContext(SpringConfigurationClass.class);
+	- with java and the annotations like autowired the configuration we do in java is less
+	- With springboot we are moving towards jaav configuration
+
+Autowiring
+	- by type - class or interface
+	- by name
+	- constructor - similar to by type but through constructor
+	
+Debugging with spring framework
+NoUniqueBeanDefinitionException - when spring found more than one matchin bean
+NoSuchBeanException - when spring doesnt find the bean 
+@Qualifier - When multiple depenecies of bean is there we can use @Qualifier to identify the correct bean - @Qualifier will be added to a class
+@Primary - When @Primary is added to class, that bean will be used
+
+CDI - contexts and Dependency injection
+- CDI defines an API for dependency injection -- java dependency injection standard -- just like JPA provides a standard
+- Sprint support most of the annotations -
+	- CDI = @Inject, Spring = @AutoWired
+	- CDI = @Named, Spring = @Qualifier or @Primary
+	- CDI = @Singleton, Spring = @Singleton
+- Spring always stays a little bit head s0 spring is recommended
+
+Major versions
+ - Spring 2.5 maded annotaion-driven configuration possible - before 2.5 no annotations support
+ - Spring 3.0 which made use of java 5 language 
+ - Spring 4 - support java 8 - minimum java SE6 - introduced @RestController annotation
+	- Support Jcache
+ - Spring 5 -Functional web framework - Support java Jigsaw(Java Modularity) - Reactive programming - support for kotlin(Can write a java program in less lines)
+ 
+ Spring Modules - Spring has different modules to support different layers
+	- Core Container 
+		- Beans, 
+		- Core, 
+		- Context, 
+		- Spring Expression language
+	- Data Access
+		- Spring JDBC
+		- ORM
+		- OXM - Object xml mapping ex:- JAX-B
+		- JMS
+		- Transactions
+	- Web
+		- WebSockets
+		- Web
+		- Servlet
+		- Portlet
+	- All Layers
+		- AOP
+		- Aspects
+		- Messaging
+		- Instrumentation
+	- Test
+ 
+Spring Projects
+	- Spring Boot - to develop microservices
+	- Spring Cloud - dynamically deploy, dynamically connect
+	- Spring Data - provides consist data access from multiple databases
+	- Spring Integeration - implements enterprise patterns
+	- Spring batch - developing batch apps
+	- Spring security - oauth etc
+	- Spring HATEAOS - supports the HATEAOS formats
+	
+To make sure all the dependencies are using same versions  of spring libraries we use spring-framework-bom
+BOM- bil of material dependency - it declares the version to be used for all spring dependencies
+
+Design Patterns - 
+Front Controller - Dipatcher Servlet - Any request from browser will first goes to dispatcher servlet and then go to any controller
+				- This pattern is called front controller pattern
+Prototype pattern
+Managing beans and dependency injection are other patterns
+Factory Pattern - BeanFactory and ApplicationContext
+Template Method Pattern - AbstractController
+
+Spring MVC
+- Model 1 Architecture
+	- Most basic
+	- request will directly goes to jsp - in jsp directly calling the database - creating view - No servlets - handles all the logic
+	- Very complex and difficult to maintain - jsps have all the logic
+- Model2 Archtitecure
+	- request goes to servlet - servlet get the data from database and make model ready - and view uses the model to show content
+	- servelts act as controller
+- Model2 Front controller pattern
+	- All the request goes to front controller and then servlet
+	- which gets all the request and send reponse
+	- One place to control - We can enable security at this layer
+	
+- First request t0 dispatcher servlet -> It knows what are the controllers available and what are the urls available
+	-> Dispatcher servlet knows all the handler mappings - look up the handler mappings and find out mapped controller and redirect the request
+	-> Controller populates the model with the data and returns the view 
+	-> Viewresolver adds the suffix and prefix and returns the actual view
+	-> View will be rendered
+	
+- We have to configure spring dispatcher servlet in web.xml
+	-> We have to pass spring configuration xml file as a parameter value
+	-> and urlpattern to root /
+	
+@ModelAttribute -> if a method is defined with @ModelAttribute in a controller class. The attributes added to a Model attribtue in this method are available for all controller methods. This method will be called before any @RequestMapping attribtues
+
+@SessionAttributes("name") -> names of model attributes which should be stored in session
+
+
+@DateFormat
+-> initbinder - @InitBinder on a method -> we can add a custom dateformat to be used for Date type class to be used
+
+Before, you had to resort to manually parsing the date:
+ public void webmethod(@RequestParam("date") String strDate) {
+    Date date = ... // manually parse the date
+ }
+Now you can get the parsed date directly:
+ public void webmethod(@RequestParam("date") Date date) {
+ }
+2) If your jsp page supplies a date on the form yyyy-MM-dd you can retrieve it as a Date object directly in your controller.
+3) Spring tries against all registered editors to see if values can be converted into objects. You don't have to do anything in the object itself, that's the beauty of it. 
+
+@ControllerAdvice -> common to all controllers available in application
+	@ExceptionHandler(value=Exception.class)
+	public String handleException(HttpServletRequest request,Exception ex)
+	
+Clear separation of concerns
+
+Auto configuration is available in spring-boot-autoconfigure.jar
+To exclude tomcat from embdedded servers add exclusion tag to spring-boot-web-starter
+
+spring-boot-starter-web 
+
+use of @ConfigurationProperties -is type safety
+
+Different profiles properties files can be set in application-dev.properties/application-qa.properties
+
+@Profile("dev") -> bean available only for dev environent
+
+RowMapper is a interface contains maprow method which is used to map a result to a bean
+
+jdbctemplate.query and jdbctemplate.queryForObject();
+
+JPA maps java object to a row of a database table
+
+Mockito framework offers lot of mocking
+	-> When a test case contains service which needs to connect to database -> we can mock the service in a test case
+	->
+	Ex:- 
+	x() {
+		DataService service = service.findAllData();
+	}
+	
+	@Test
+	DataService serviceMock = mock(DataService.class);
+	when(serviceMock.findAllData()).thenReturn(new int[]{24,15,3});
+	
+@RunWith(MockittoJunitRunner.class)
+public class SomeBusinessMockAnnotationsTest {
+	@Mock
+	DataService dataService;
+	@InjectMocks
+	SomeBusinessImpl businessImpl;
+	@Test
+	pubic void testFindTheGreatestFormAllData() {
+		when(dataService.reteriveAllData()).thenReturn(new int[]{24,25,3});
+	}
+}
+
+Unittest cases for controller methods
+@RunWith(SpringRunner.class)
+@WebMvcTest(value =<Controller.class>) 
+public class SurveyControllertest {
+
+@AutoWired
+private MockMvc mockMvc;
+
+@MockBean
+private SurverySerivce surveryService;
+
+
+MockRequestBuilders
+
+mockMvc.perform();
+
+JSONAssert
+
+Integeration test
+-
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes=Application.class(SpringBootConfigurationClass))
+
+@LocalServerPort
+private int port;

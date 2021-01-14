@@ -1,0 +1,90 @@
+Java Interview Questions
+ - JVM converts the executable byte code into executable instructions of that specific OS system
+ - JVMs in differets OS are able to understand bytecode and convert into executable instructions
+ 
+ JVM vs JDK vs JRE
+ - JDK - javac,jar, debugging tools, javap
+ - JRE - java, javaw, libraries, rt.jar + JVM - Just in time compiler
+	 - JIT - The Just-In-Time (JIT) compiler is a key component of the OpenJ9 VM that improves the performance of Java applications by compiling platform-neutral Java bytecode into native machine code at run time. Without the JIT, the VM has to interpret the bytecodes itself - a process that requires extra CPU and memory.
+
+	The JIT compiler doesn't compile every method that gets called because thousands of methods can be called at startup. Instead, OpenJ9 records the number of times a method is called. When the count reaches a pre-defined invocation threshold, JIT compilation is triggered. Once a method has been compiled by the JIT, the VM can call the compiled method rather than interpreting it.
+
+C++ is not platform independent 
+Java is not completley pure Object Oriented - Because it contains primitives
+C++ allows structural programming - provides pointers which is a security concern- programmer responsible for allocation and deallocation of memoty - allows multiple inheritance
+Java - Automatic memory allocation - doesnt allow mutliple inheritance
+
+Classloader
+ 3 types of classes
+	- Programmer own written classes
+	- Third Party libraries classes
+	- Java Libraries classes
+3 types of loaders
+	- System class loder - loads classes from classpath
+	- Extension class loader - loads classess from extension directory ext,lib inside JVM and JRE
+	- bootstrap class loader - loads all the java core files
+	
+Wrapper classes
+	- Wrappers around primitive types like Integer,Boolean,Double,FLoat
+	- wraps around primitve types and provide utility methods, can assign a null value, to use wrapper class in a collection
+	- Integer integer = new Integer("55"); - convert string into Intger wrapper
+	- Autoboxing converts a primitive into wrapper automatically
+	- immutable
+
+valueOf - provide another way of creating a wrapper object
+		- with constructor - it always create a new object
+		- with valueOf - may get cached value - saves memory
+		- The short answer to this question is, direct assignment of an int literal to an Integer reference is an example of auto-boxing concept where the literal value to object conversion code is handled by the compiler, so during compilation phase compiler converts Integer a = 127; to Integer a = Integer.valueOf(127);.
+		The Integer class maintains an internal IntegerCache for integers which, by default, ranges from -128 to 127 and Integer.valueOf() method returns objects of mentioned range from that cache. So a == b returns true because a and b both are pointing to the same object.
+		- The cache is initialized on the first usage when the class gets loaded into memory because of the static block. The max range of the cache can be controlled by the -XX:AutoBoxCacheMax JVM option.
+		- This caching behavior is not applicable to Integer objects only. Similar to Integer.IntegerCache, we also have ByteCache, ShortCache, LongCache, CharacterCache for Byte, Short, Long, Character respectively.
+		- Byte, Short, and Long have a fixed range for caching between -127 to 127 (inclusive), but for Character, the range is from 0 to 127 (inclusive). The range can be modified via argument only for Integer but not for others.
+		- As wrapper classes are immutable - no need to worry about changing the cached value
+AutoBoxing - Integer a = 10; --> Integer a = Integer.valueOf(10); --> may get the value from cache
+
+Casting -
+ - Implicit Casting - Automatically done by compiler
+ - int a = 100;
+ - long b = a --> Implicit casting --> automatic widening -> storing smaller into longer
+ - Explicit casting - narrowing conversions
+ - long a =1234567;
+ - int b= (int)a; //explicit casting
+ - Explicit cast cause truncation of value
+ 
+ Strings are immutable -> Once created cannot be modified. Any modification on string creates a new object
+ Strings are stored on memory based on how we created them
+ String s ="vinod" --> value will be stored in stirng constant pool which is inside heap memory. Compiler checks if it exists in a pool if it exists it will be reused or a new one will be created
+ String s = new String("vinod"); -> A new string object will be created in a heap memory
+ StringBuffer is a threadsafe -> StringBuffer uses synchronized keyword on all methods
+ StringBuilder is not a threadsafe
+ 
+ Inheritance --
+ ArrayList >> AbstractList >> AbstractCollection
+ HashMap >> AbstractMap >> Map
+ LinkedHashMap >> HashMap
+ 
+ Method Overloading -
+	Same method name but different type of parameters
+	constructor overloading -
+	public HashMap()
+	public HashMap(int capacity)
+	Methods -
+	public boolean addAll(Collection<? Extends > C)
+Method overloading -
+	Same method name with same parameters
+	HashMap size() overrides AbstractMap Size() method
+	
+Interface defines a specific contract -- What are the responsibilites that specific class should do
+All concrete classes should define all the methods defined in a interface
+Map interface provides a default method for compararator implementation since 1.8
+
+Multiple implementation
+HashMap implements Map,Clonable,Serializable
+
+Polymorphism --> Same code -> behaves differently
+Instance of
+Coupling -> How much a class depends on specific class -> like a class with public variables -> if a varibale name changed -> all the classess got affected
+
+Cohesion -> measure of how related the responsibilites of a class are. A class must be highly cohesive i.e. responsibilites should be related to each other.
+
+

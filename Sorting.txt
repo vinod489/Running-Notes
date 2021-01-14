@@ -1,0 +1,44 @@
+Sorting
+
+- Bubble Sort 
+	- Bubble sort works by swapping adjacent elements if they're not in the desired order. This process repeats from the beginning of the array until all elements are in order.
+	- We know that all elements are in order when we manage to do the whole iteration without swapping at all - then all elements we compared were in the desired order with their adjacent elements, and by extension, the whole array.
+
+	Here are the steps for sorting an array of numbers from least to greatest:
+
+    4 2 1 5 3: The first two elements are in the wrong order, so we swap them.
+
+    2 4 1 5 3: The second two elements are in the wrong order too, so we swap.
+
+    2 1 4 5 3: These two are in the right order, 4 < 5, so we leave them alone.
+
+    2 1 4 5 3: Another swap.
+
+    2 1 4 3 5: Here's the resulting array after one iteration.
+
+	Because at least one swap occurred during the first pass (there were actually three), we need to go through the whole array again and repeat the same process.
+
+	By repeating this process, until no more swaps are made, we'll have a sorted array.
+
+	public static void bubbleSort(int[] a) {
+		boolean sorted = false;
+		int temp;
+		while(!sorted) {
+			sorted = true;
+			for (int i = 0; i < array.length - 1; i++) {
+				if (a[i] > a[i+1]) {
+					temp = a[i];
+					a[i] = a[i+1];
+					a[i+1] = temp;
+					sorted = false;
+				}
+			}
+		}
+	}
+	
+	When using this algorithm we have to be careful how we state our swap condition.
+	For example, if I had used a[i] >= a[i+1] it could have ended up with an infinite loop, because for equal elements this relation would always be true, and hence always swap them.
+	
+	Each of those n times we're iterating through the whole array (for-loop in the code), meaning the worst case time complexity would be O(n^2).
+	
+- Insertion Sort
