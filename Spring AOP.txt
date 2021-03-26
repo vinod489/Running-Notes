@@ -336,4 +336,44 @@ Real time example with AOP
 		<aop:aspectj-autoproxy> -> spring supports the @Aspect class
 	-> Java configuration -> @EnableAspectJAutoProxy
 
-	
+What is an Aspect?
+An aspect is the cross-cutting functionality that you are implementing. It is the aspect of your application you are modularizing. An example of an aspect is logging. Logging is something that is required throughout an application. However, because applications tend to be broken down into layers based on functionality, reusing a logging module through inheritance does not make sense. However, you can create a logging aspect and apply it throughout your application using AOP.
+
+30) What is a Jointpoint?
+A joinpoint is a point in the execution of the application where an aspect can be plugged in. This point could be a method being called, an exception being thrown, or even a field being modified. These are the points where your aspect’s code can be inserted into the normal flow of your application to add new behavior.
+
+31) What is an Advice?
+Advice is the implementation of an aspect. It is something like telling your application of a new behavior. Generally, and advice is inserted into an application at joinpoints.
+
+32) What is a Pointcut?
+A pointcut is something that defines at what joinpoints an advice should be applied. Advices can be applied at any joinpoint that is supported by the AOP framework. These Pointcuts allow you to specify where the advice can be applied.
+
+33) What is an Introduction in AOP?
+An introduction allows the user to add new methods or attributes to an existing class. This can then be introduced to an existing class without having to change the structure of the class, but give them the new behavior and state.
+
+34) What is a Target?
+A target is the class that is being advised. The class can be a third party class or your own class to which you want to add your own custom behavior. By using the concepts of AOP, the target class is free to center on its major concern, unaware to any advice that is being applied.
+
+35) What is a Proxy?
+A proxy is an object that is created after applying advice to a target object. When you think of client objects the target object and the proxy object are the same.
+
+36) What is meant by Weaving?
+The process of applying aspects to a target object to create a new proxy object is called as Weaving. The aspects are woven into the target object at the specified joinpoints.
+
+37) What are the different points where weaving can be applied?
+Compile Time
+Classload Time
+Runtime
+38) What are the different advice types in spring?
+Around : Intercepts the calls to the target method
+Before : This is called before the target method is invoked
+After : This is called after the target method is returned
+Throws : This is called when the target method throws and exception
+Around : org.aopalliance.intercept.MethodInterceptor
+Before : org.springframework.aop.BeforeAdvice
+After : org.springframework.aop.AfterReturningAdvice
+Throws : org.springframework.aop.ThrowsAdvice
+39) What are the different types of AutoProxying?
+BeanNameAutoProxyCreator
+DefaultAdvisorAutoProxyCreator
+Metadata autoproxying	

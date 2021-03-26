@@ -42,3 +42,46 @@ The time it takes for the platter to spin and the actuator arm to find the corre
 
 
 Buffer pool is stored in RAM
+
+
+Horizontal Scaling -> Increasing the system resources to handle more requests -> Its cost effective
+Vertical Scaling -> Increase the number of small sized servers to handle more requests -> Its not cost effective but there are advantages like
+1. Fault tolerance -> THere is no single point of failure
+2. Low Latency -> By placing the requests in multiple locations -> We can get the advantage of geographical locations
+
+Database scaling
+Vertical Scaling -> Its about saving the different tables in different servers -> Splitting of tables into different servers
+Horizontal Scaling -> Its about splitting the same table rows into multiple servers based on some key -> Database sharding
+Partition -> Splitting the table into multiple regions/partitions in the same server.
+
+We can also use one master database system which handles only writes and replicating the data into slaves which only handles read requests
+-> There is a problem of inconsistency here
+
+CAP therom - Consistency, Availability and Partition -> We can give up Consistency and work on providing Availability and Partition.
+
+************************************************
+consistency — a guarantee that every node in a distributed cluster returns the same, most recent, successful write. consistency refers to every client having the same view of the data. there are various types of consistency models. consistency in cap (used to prove the theorem) refers to linearizability or sequential consistency, a very strong form of consistency.
+availability — every non-failing node returns a response for all read and write requests in a reasonable amount of time. the key word here is every. to be available, every node on (either side of a network partition) must be able to respond in a reasonable amount of time.
+partition tolerant — the system continues to function and upholds its consistency guarantees in spite of network partitions. network partitions are a fact of life. distributed systems guaranteeing partition tolerance can gracefully recover from partitions once the partition heals.
+the c and a in acid represent different concepts than c and a in the cap theorem.
+
+the cap theorem categorizes systems into three categories:
+
+cp (consistent and partition tolerant) — at first glance, the cp category is confusing, i.e., a system that is consistent and partition tolerant but never available. cp is referring to a category of systems where availability is sacrificed only in the case of a network partition.
+ca (consistent and available) — ca systems are consistent and available systems in the absence of any network partition. often a single node's db servers are categorized as ca systems. single node db servers do not need to deal with partition tolerance and are thus considered ca systems. the only hole in this theory is that single node db systems are not a network of shared data systems and thus do not fall under the preview of cap.
+ap (available and partition tolerant) — these are systems that are available and partition tolerant but cannot guarantee consistency.
+********************************************888
+BASE -> Basically Available Soft sate and Eventual consistency -> No SQL
+ACID -> Atomicity, Consistency, Isolation, Durability -> RDBMS
+
+How distributed datastore works
+
+-> Distributed datastore contains a multiple nodes among which data will be distributed
+-> All the nodes are connected circuralry with a hash ring
+-> Based on a hashing key that data will be decided to go into particular node
+-> Each node has it own data and it also maintains the copy of part of other node
+-> like this one node has a multiple copies in other nodes
+-> So if one node goes down, we can still get the data from other nodes.
+-> To scale up this nodes, We can add a nodes in between the nodes
+-> All the nodes talk to each other using gossip protocol
+-> this way nodes identify if any node is down or not and get rearaanged automatically

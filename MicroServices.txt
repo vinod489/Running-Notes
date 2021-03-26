@@ -1,0 +1,14 @@
+Distributed Transactions
+
+2 phase commit
+	- Prepare Phase && Commit Phase
+		- Coordinator 
+			- creates a transaction id
+			- calls the Customer waller service and block the credit
+			- Calls the order service and prepare the order
+			- Both services return the response to coordinator
+			- Until both services are returned back, the wallet and the order are blocked
+			- Coordinator also waits for the response
+			- Once both services returned success - issues commit transaction to customer wallet and order service
+			- Responded back to coordinator
+			- In case customer wallet fails due to insufficient balance - retruns failed response to coordinator

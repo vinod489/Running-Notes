@@ -51,3 +51,299 @@ Terminal and non-terminal operations
 Terminal Operations -  after the operation is performed, the stream pipeline is considered consumed, and can no longer be used
 forEach is a terminal operation - once stream is processed it cant be used again
 map() -> produces a new stream after applying a function of each element of the orginal stream
+
+**************************
+
+A stream does not store data and, in that sense, is not a data structure. It also never modifies the underlying data source.
+
+This functionality – java.util.stream – supports functional-style operations on streams of elements, such as map-reduce transformations on collections.
+
+forEach() -> terminal operation -> Consumer functional interface
+ empList.stream().forEach(e -> e.salaryIncrement(10.0));
+
+map() -> produces a new stream after applying the function to each element -> intermediate operation -> Function functional interface
+	List<Employee> employees = Stream.of(empIds)
+      .map(employeeRepository::findById)
+      .collect(Collectors.toList());
+
+collect() -> collect the stream into  -> after stream is processed -> to get data out of stream
+	List<Employee> employees = empList.stream().collect(Collectors.toList());
+
+filter() -> applies a predicate on each element -> produces a new stream
+Integer[] empIds = { 1, 2, 3, 4 };
+    
+    List<Employee> employees = Stream.of(empIds)
+      .map(employeeRepository::findById)
+      .filter(e -> e != null)
+      .filter(e -> e.getSalary() > 200000)
+      .collect(Collectors.toList());
+    
+
+findFirst() -> finds the first element in a stream after processed
+Ex:-
+Employee employee = Stream.of(empIds)
+      .map(employeeRepository::findById)
+      .filter(e -> e != null)
+      .filter(e -> e.getSalary() > 100000)
+      .findFirst()
+      .orElse(null);
+	  
+toArray
+	Employee[] employees = empList.stream().toArray(Employee[]::new);
+	
+flatMap
+A stream can hold complex data structures like Stream<List<String>>. In cases like this, flatMap() helps us to flatten the data structure to simplify further operations:
+
+List<String> namesFlatStream = namesNested.stream()
+      .flatMap(Collection::stream)
+      .collect(Collectors.toList());
+	  
+peek -> forEach() -> is a terminal operation --> peek is not a terminal operation
+
+empList.stream()
+      .peek(e -> e.salaryIncrement(10.0))
+      .peek(System.out::println)
+      .collect(Collectors.toList());
+	  
+A stream pipeline consists of a stream source, followed by zero or more intermediate operations, and a terminal operation.
+count()
+Long empCount = empList.stream()
+      .filter(e -> e.getSalary() > 200000)
+      .count();
+	  
+Some operations are deemed short-circuiting operations. Short-circuiting operations allow computations on infinite streams to complete in finite time:
+
+Stream<Integer> infiniteStream = Stream.iterate(2, i -> i * 2);
+
+    List<Integer> collect = infiniteStream
+      .skip(3)
+      .limit(5)
+      .collect(Collectors.toList());
+
+    assertEquals(collect, Arrays.asList(16, 32, 64, 128, 256));
+
+Lazy Evaluation
+One of the most important characteristics of Java streams is that they allow for significant optimizations through lazy evaluations.
+Computation on the source data is only performed when the terminal operation is initiated, and source elements are consumed only as needed.
+All intermediate operations are lazy, so they’re not executed until a result of a processing is actually needed.
+
+Integer[] empIds = { 1, 2, 3, 4 };
+Employee employee = Stream.of(empIds)
+      .map(employeeRepository::findById)
+      .filter(e -> e != null)
+      .filter(e -> e.getSalary() > 100000)
+      .findFirst()
+      .orElse(null);
+	  
+Stream performs the map and two filter operations, one element at a time.
+It first performs all the operations on id 1. Since the salary of id 1 is not greater than 100000, the processing moves on to the next element.
+Id 2 satisfies both of the filter predicates and hence the stream evaluates the terminal operation findFirst() and returns the result.
+Processing streams lazily allows avoiding examining all the data when that’s not necessary. This behavior becomes even more important when the input stream is infinite and not just very large.
+
+Comparison Based Stream Operations
+sorted
+this sorts the stream elements based on the comparator passed we pass into it.
+ List<Employee> employees = empList.stream()
+      .sorted((e1, e2) -> e1.getName().compareTo(e2.getName()))
+      .collect(Collectors.toList());
+	  
+Note that short-circuiting will not be applied for sorted().
+
+This means, in the example above, even if we had used findFirst() after the sorted(), the sorting of all the elements is done before applying the findFirst(). This happens because the operation cannot know what the first element is until the entire stream is sorted. 	
+
+min and max
+ Employee firstEmp = empList.stream()
+      .min((e1, e2) -> e1.getId() - e2.getId())
+      .orElseThrow(NoSuchElementException::new);
+Comparator.Comparing
+Employee maxSalEmp = empList.stream()
+      .max(Comparator.comparing(Employee::getSalary))
+      .orElseThrow(NoSuchElementException::new);
+
+distinct
+distinct() does not take any argument and returns the distinct elements in the stream, eliminating duplicates. It uses the equals() method of the elements to decide whether two elements are equal or not:
+
+List<Integer> intList = Arrays.asList(2, 5, 3, 2, 4, 3);
+    List<Integer> distinctIntList = intList.stream().distinct().collect(Collectors.toList());
+
+allMatch, anyMatch, and noneMatch
+These operations all take a predicate and return a boolean. Short-circuiting is applied and processing is stopped as soon as the answer is determined:
+
+ boolean allEven = intList.stream().allMatch(i -> i % 2 == 0);
+    boolean oneEven = intList.stream().anyMatch(i -> i % 2 == 0);
+    boolean noneMultipleOfThree = intList.stream().noneMatch(i -> i % 3 == 0);
+
+allMatch() checks if the predicate is true for all the elements in the stream. Here, it returns false as soon as it encounters 5, which is not divisible by 2.
+
+anyMatch() checks if the predicate is true for any one element in the stream. Here, again short-circuiting is applied and true is returned immediately after the first element.
+
+noneMatch() checks if there are no elements matching the predicate. Here, it simply returns false as soon as it encounters 6, which is divisible by 3.
+
+
+Stream is a stream of object references. However, there are also the IntStream, LongStream, and DoubleStream – which are primitive specializations for int, long and double respectively. These are quite convenient when dealing with a lot of numerical primitives.
+
+These specialized streams do not extend Stream but extend BaseStream on top of which Stream is also built.
+
+As a consequence, not all operations supported by Stream are present in these stream implementations. For example, the standard min() and max() take a comparator, whereas the specialized streams do not.
+
+
+The most common way of creating an IntStream is to call mapToInt() on an existing stream:
+
+Integer latestEmpId = empList.stream()
+      .mapToInt(Employee::getId)
+      .max()
+      .orElseThrow(NoSuchElementException::new);
+	  
+IntStream.of(1, 2, 3);
+
+IntStream.range(10, 20)
+
+Stream.of(1, 2, 3) --> returns a Stream<Integer>
+
+sum(), average(), range() etc:
+
+Double avgSal = empList.stream()
+      .mapToDouble(Employee::getSalary)
+      .average()
+      .orElseThrow(NoSuchElementException::new);
+	  
+Reduction Operations
+A reduction operation (also called as fold) takes a sequence of input elements and combines them into a single summary result by repeated application of a combining operation. We already saw few reduction operations like findFirst(), min() and max().
+
+reduce
+The most common form of reduce() is:
+
+T reduce(T identity, BinaryOperator<T> accumulator)
+where identity is the starting value and accumulator is the binary operation we repeated apply.
+
+Double sumSal = empList.stream()
+      .map(Employee::getSalary)
+      .reduce(0.0, Double::sum);
+
+joining
+
+String empNames = empList.stream()
+      .map(Employee::getName)
+      .collect(Collectors.joining(", "))
+      .toString();
+	  
+toSet
+
+ Set<String> empNames = empList.stream()
+            .map(Employee::getName)
+            .collect(Collectors.toSet());
+			
+toCollection
+
+Collectors.toCollection() to extract the elements into any other collection
+Vector<String> empNames = empList.stream()
+            .map(Employee::getName)
+            .collect(Collectors.toCollection(Vector::new))
+			
+summarizingDouble
+
+summarizingDouble() is another interesting collector – which applies a double-producing mapping function to each input element and returns a special class containing statistical information for the resulting values:
+
+DoubleSummaryStatistics stats = empList.stream()
+      .collect(Collectors.summarizingDouble(Employee::getSalary));
+ assertEquals(stats.getCount(), 3);
+    assertEquals(stats.getSum(), 600000.0, 0);
+    assertEquals(stats.getMin(), 100000.0, 0);
+    assertEquals(stats.getMax(), 300000.0, 0);
+    assertEquals(stats.getAverage(), 200000.0, 0);
+
+summaryStatistics() can be used to generate similar result when we’re using one of the specialized streams:
+DoubleSummaryStatistics stats = empList.stream()
+      .mapToDouble(Employee::getSalary)
+      .summaryStatistics();
+
+    assertEquals(stats.getCount(), 3);
+    assertEquals(stats.getSum(), 600000.0, 0);
+    assertEquals(stats.getMin(), 100000.0, 0);
+    assertEquals(stats.getMax(), 300000.0, 0);
+    assertEquals(stats.getAverage(), 200000.0, 0);
+	
+
+partitioningBy
+We can partition a stream into two – based on whether the elements satisfy certain criteria or not.
+
+Let’s split our List of numerical data, into even and ods:
+
+@Test
+public void whenStreamPartition_thenGetMap() {
+    List<Integer> intList = Arrays.asList(2, 4, 5, 6, 8);
+    Map<Boolean, List<Integer>> isEven = intList.stream().collect(
+      Collectors.partitioningBy(i -> i % 2 == 0));
+    
+    assertEquals(isEven.get(true).size(), 4);
+    assertEquals(isEven.get(false).size(), 1);
+}
+Here, the stream is partitioned into a Map, with even and odds stored as true and false keys.
+
+
+groupingBy
+groupingBy() offers advanced partitioning – where we can partition the stream into more than just two groups.
+ Map<Character, List<Employee>> groupByAlphabet = empList.stream().collect(
+      Collectors.groupingBy(e -> new Character(e.getName().charAt(0))));
+
+    assertEquals(groupByAlphabet.get('B').get(0).getName(), "Bill Gates");
+    assertEquals(groupByAlphabet.get('J').get(0).getName(), "Jeff Bezos");
+    assertEquals(groupByAlphabet.get('M').get(0).getName(), "Mark Zuckerberg");
+	
+Infinite Streams
+generate
+We provide a Supplier to generate() which gets called whenever new stream elements need to be generated:
+
+@Test
+public void whenGenerateStream_thenGetInfiniteStream() {
+    Stream.generate(Math::random)
+      .limit(5)
+      .forEach(System.out::println);
+}
+
+
+iterate() takes two parameters: an initial value, called seed element and a function which generates next element using the previous value. iterate(), by design, is stateful and hence may not be useful in parallel streams:
+@Test
+public void whenIterateStream_thenGetInfiniteStream() {
+    Stream<Integer> evenNumStream = Stream.iterate(2, i -> i * 2);
+
+    List<Integer> collect = evenNumStream
+      .limit(5)
+      .collect(Collectors.toList());
+
+    assertEquals(collect, Arrays.asList(2, 4, 8, 16, 32));
+}
+
+
+File Operations
+Let’s see how we could use the stream in file operations.
+
+File Write Operation
+@Test
+public void whenStreamToFile_thenGetFile() throws IOException {
+    String[] words = {
+      "hello", 
+      "refer",
+      "world",
+      "level"
+    };
+    
+    try (PrintWriter pw = new PrintWriter(
+      Files.newBufferedWriter(Paths.get(fileName)))) {
+        Stream.of(words).forEach(pw::println);
+    }
+}
+
+
+private List<String> getPalindrome(Stream<String> stream, int length) {
+    return stream.filter(s -> s.length() == length)
+      .filter(s -> s.compareToIgnoreCase(
+        new StringBuilder(s).reverse().toString()) == 0)
+      .collect(Collectors.toList());
+}
+
+@Test
+public void whenFileToStream_thenGetStream() throws IOException {
+    List<String> str = getPalindrome(Files.lines(Paths.get(fileName)), 5);
+    assertThat(str, contains("refer", "level"));
+}

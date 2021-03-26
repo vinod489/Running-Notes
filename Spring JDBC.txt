@@ -1,0 +1,91 @@
+Spring JDBC
+
+All the classes in Spring JDBC are divided into four separate packages:
+
+core – the core functionality of JDBC. Some of the important classes under this package include JdbcTemplate, SimpleJdbcInsert, SimpleJdbcCall and NamedParameterJdbcTemplate.
+datasource – utility classes to access a datasource. It also has various datasource implementations for testing JDBC code outside the Jakarta EE container.
+object – DB access in an object-oriented manner. It allows executing queries and returning the results as a business object. It also maps the query results between the columns and properties of business objects.
+support – support classes for classes under core and object packages. E.g. provides the SQLException translation functionality.
+
+
+To begin with, let's start with some simple configuration of the data source (we'll use a MySQL database for this example):
+
+@Configuration
+@ComponentScan("com.baeldung.jdbc")
+public class SpringJdbcConfig {
+    @Bean
+    public DataSource mysqlDataSource() {
+        DriverManagerDataSource dataSource = new DriverManagerDataSource();
+        dataSource.setDriverClassName("com.mysql.jdbc.Driver");
+        dataSource.setUrl("jdbc:mysql://localhost:3306/springjdbc");
+        dataSource.setUsername("guest_user");
+        dataSource.setPassword("guest_password");
+
+        return dataSource;
+    }
+}
+
+The JDBC template is the main API through which we'll access most of the functionality that we're interested in:
+
+creation and closing of connections
+executing statements and stored procedure calls
+iterating over the ResultSet and returning results
+Firstly, let’s start with a simple example to see what the JdbcTemplate can do:
+
+int result = jdbcTemplate.queryForObject(
+    "SELECT COUNT(*) FROM EMPLOYEE", Integer.class);
+	
+	public int addEmplyee(int id) {
+    return jdbcTemplate.update(
+      "INSERT INTO EMPLOYEE VALUES (?, ?, ?, ?)", id, "Bill", "Gates", "USA");
+}
+Notice the standard syntax of providing parameters – using the `?` character. Next – let's look at an alternative to this syntax.
+
+
+o get support for named parameters, we'll use the other JDBC template provided by the framework – the NamedParameterJdbcTemplate.
+
+Additionally, this wraps the JbdcTemplate and provides an alternative to the traditional syntax using “?” to specify parameters. Under the hood, it substitutes the named parameters to JDBC “?” placeholder and delegates to the wrapped JDCTemplate to execute the queries:
+
+SqlParameterSource namedParameters = new MapSqlParameterSource().addValue("id", 1);
+return namedParameterJdbcTemplate.queryForObject(
+  "SELECT FIRST_NAME FROM EMPLOYEE WHERE ID = :id", namedParameters, String.class);
+Notice how we are using the MapSqlParameterSource to provide the values for the named parameters.
+
+For instance, let's look at below example that uses properties from a bean to determine the named parameters:
+
+Employee employee = new Employee();
+employee.setFirstName("James");
+
+String SELECT_BY_ID = "SELECT COUNT(*) FROM EMPLOYEE WHERE FIRST_NAME = :firstName";
+
+SqlParameterSource namedParameters = new BeanPropertySqlParameterSource(employee);
+return namedParameterJdbcTemplate.queryForObject(
+  SELECT_BY_ID, namedParameters, Integer.class);
+Note how we're now making use of the BeanPropertySqlParameterSource implementations instead of specifying the named parameters manually like before.
+
+Mapping Query Results to Java Object
+Another very useful feature is the ability to map query results to Java objects – by implementing the RowMapper interface.
+
+For example – for every row returned by the query, Spring uses the row mapper to populate the java bean:
+
+public class EmployeeRowMapper implements RowMapper<Employee> {
+    @Override
+    public Employee mapRow(ResultSet rs, int rowNum) throws SQLException {
+        Employee employee = new Employee();
+
+        employee.setId(rs.getInt("ID"));
+        employee.setFirstName(rs.getString("FIRST_NAME"));
+        employee.setLastName(rs.getString("LAST_NAME"));
+        employee.setAddress(rs.getString("ADDRESS"));
+
+        return employee;
+    }
+}
+Subsequently, we can now pass the row mapper to the query API and get fully populated Java objects:
+
+String query = "SELECT * FROM EMPLOYEE WHERE ID = ?";
+Employee employee = jdbcTemplate.queryForObject(
+  query, new Object[] { id }, new EmployeeRowMapper());
+  
+  
+  

@@ -150,8 +150,8 @@ Can define custom generation strategy
 
 Hibernate Query language
 	-> session.createQuery("from Student").getResultList();
-	-> session.createQuery("from Students where s.lastName='Doe'").getResultList(); -->Student is entity name and lastName is a variable of entity
-	-> session.createQuery("from Students where s.lastName='Doe' OR s.firstName='Daffy'").getResultList(); -->Student is entity name and lastName is a variable of entity
+	-> session.createQuery("from Student s where s.lastName='Doe'").getResultList(); -->Student is entity name and lastName is a variable of entity
+	-> session.createQuery("from Student s where s.lastName='Doe' OR s.firstName='Daffy'").getResultList(); -->Student is entity name and lastName is a variable of entity
 
 If you are using Hibernate 5.2 or higher, then the Query list() method has been deprecated.
 In your code you should make the following update:
@@ -285,7 +285,7 @@ mappedBy
 
 Cascade delete
 	-> Delete parent on delete of child - CascadeType.ALL
-	-> Dont delete parent records on delete of chile - Dont use CascadeType.REMOVE
+	-> Dont delete parent records on delete of child - Dont use CascadeType.REMOVE
 	
 @OneToMany
 	->Parent can have many child records
@@ -770,3 +770,29 @@ If we're using Spring Boot, we can define it as an application property:
 spring.jpa.properties.hibernate.jdbc.batch_size=5
 
 *****************************************************************************
+Persistence Unit -> Session Factory, Session, Connection provider, transaction, Transaction Factory
+Session Factory -> its a factory of session and a client of connection provider. Holds second level cache
+Session -> provides interface between application and a data stored in database. Its a short lived and wraps the jdbc connection
+Transaction
+The transaction object specifies the atomic unit of work. It is optional. The org.hibernate.Transaction interface provides methods for transaction management.
+
+ConnectionProvider
+It is a factory of JDBC connections. It abstracts the application from DriverManager or DataSource. It is optional.
+
+TransactionFactory
+It is a factory of Transaction. It is optional.
+
+In xmls
+	-> Each presistent class needs a xml like employee.bmp.xml
+	-> and a hiberante configuration xml -> hibernate.cfg.xml -> which has a configuration for session factory and mapping for presistent class xml
+	
+StandardServiceRegistry ssr = new StandardServiceRegistryBuilder().configure("hibernate.cfg.xml").build();  
+    Metadata meta = new MetadataSources(ssr).getMetadataBuilder().build();  
+  
+SessionFactory factory = meta.getSessionFactoryBuilder().build();  
+Session session = factory.openSession();  
+Transaction t = session.beginTransaction(); 
+
+
+
+
